@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import cors from 'cors';
+import compression from 'compression';
 import authRoutes from './src/server/routes/authRoute.js';
 import transaksiRoutes from './src/server/routes/transaksiRoute.js';
 import adminRoutes from './src/server/routes/adminRoute.js';
@@ -13,6 +14,7 @@ async function startServer() {
   const PORT = Number(process.env.PORT) || 3000;
 
   // Global Middlewares Setting
+  app.use(compression()); // Compress all responses
   app.use(cors());
   app.use(express.json()); // Built-in parsing form & body API
   app.use(express.urlencoded({ extended: true }));

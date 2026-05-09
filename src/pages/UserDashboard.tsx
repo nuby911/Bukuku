@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Wallet, LayoutDashboard, ArrowRightLeft, PieChart, LogOut, Plus, Loader2, DollarSign, X, Globe, Download
 } from 'lucide-react';
@@ -118,10 +119,10 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
     }
   };
 
-  // Format Rupiah
-  const formatRupiah = (angka: number) => {
+  // Format Rupiah memoized
+  const formatRupiah = useCallback((angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-  };
+  }, []);
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -171,114 +172,6 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
 
     doc.save(`Laporan_bukuku_${new Date().toISOString().split('T')[0]}.pdf`);
   };
-
-  const renderTransactionTable = (list: any[]) => (
-    <div className="w-full">
-      {/* Desktop View Table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-left text-sm text-slate-600">
-          <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase text-[10px] tracking-wider">
-            <tr>
-              <th className="px-6 py-4">{t.date}</th>
-              <th className="px-6 py-4">{t.description}</th>
-              <th className="px-6 py-4">{t.category}</th>
-              <th className="px-6 py-4 text-right">{t.amount}</th>
-              <th className="px-6 py-4 text-center">{t.type}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-slate-500 font-medium">
-                  <Loader2 size={24} className="animate-spin text-blue-500 mx-auto mb-2" />
-                  {t.loading}
-                </td>
-              </tr>
-            ) : list.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-16 text-center">
-                    <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Wallet size={32} />
-                    </div>
-                    <p className="text-slate-500 font-medium">{t.no_transactions}</p>
-                    <p className="text-slate-400 text-sm mt-1">{t.no_transactions_sub}</p>
-                </td>
-              </tr>
-            ) : (
-              list.map((trx: any) => (
-                <tr key={trx.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-slate-900">
-                    {new Date(trx.tanggal).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </td>
-                  <td className="px-6 py-4 truncate max-w-[200px]">{trx.keterangan || '-'}</td>
-                  <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold">
-                        {trx.nama_kategori || t.no_category}
-                      </span>
-                  </td>
-                  <td className={`px-6 py-4 font-bold text-right ${trx.tipe === 'masuk' ? 'text-emerald-600' : 'text-slate-900'}`}>
-                    {trx.tipe === 'masuk' ? '+' : '-'} {formatRupiah(parseFloat(trx.nominal))}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {trx.tipe === 'masuk' ? (
-                        <span className="inline-flex items-center justify-center px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-[10px] font-bold uppercase tracking-wider">{t.income}</span>
-                    ) : (
-                        <span className="inline-flex items-center justify-center px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-[10px] font-bold uppercase tracking-wider">{t.expense}</span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile View Card List */}
-      <div className="md:hidden divide-y divide-slate-100 bg-white">
-        {loading ? (
-          <div className="py-12 text-center text-slate-500">
-            <Loader2 size={24} className="animate-spin text-blue-500 mx-auto mb-2" />
-            {t.loading}
-          </div>
-        ) : list.length === 0 ? (
-          <div className="py-12 text-center px-6">
-            <div className="w-12 h-12 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Wallet size={24} />
-            </div>
-            <p className="text-slate-500 text-sm font-bold">{t.no_transactions}</p>
-          </div>
-        ) : (
-          list.map((trx: any) => (
-            <div key={trx.id} className="p-4 flex items-center justify-between hover:bg-slate-50 active:bg-slate-100 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${trx.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                   {trx.tipe === 'masuk' ? <DollarSign size={18} /> : <ArrowRightLeft size={18} />}
-                </div>
-                <div className="overflow-hidden">
-                   <p className="text-sm font-bold text-slate-900 truncate max-w-[150px]">{trx.keterangan || t.no_description}</p>
-                   <div className="flex items-center gap-2 mt-0.5">
-                     <span className="text-[10px] font-bold text-slate-400">
-                       {new Date(trx.tanggal).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' })}
-                     </span>
-                     <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                     <span className="text-[10px] font-bold text-blue-500 uppercase tracking-tight">{trx.nama_kategori || t.no_category}</span>
-                   </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className={`text-sm font-black whitespace-nowrap ${trx.tipe === 'masuk' ? 'text-emerald-600' : 'text-slate-900'}`}>
-                  {trx.tipe === 'masuk' ? '+' : '-'} {formatRupiah(parseFloat(trx.nominal))}
-                </p>
-                <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${trx.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                  {trx.tipe === 'masuk' ? t.income : t.expense}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
 
   // Optimasi Kalkulasi Chart dengan useMemo agar tidak re-render berat
   const chartData = useMemo(() => {
@@ -450,8 +343,15 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
               </div>
             </div>
 
+            <AnimatePresence mode="wait">
             {activeMenu === 'summary' && (
-              <>
+              <motion.div
+                key="summary"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                   <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-blue-600 to-blue-800 shadow-xl shadow-blue-200 p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] text-white relative overflow-hidden flex flex-col justify-center">
                     <div className="absolute top-0 right-0 p-16 bg-white/10 blur-[50px] rounded-full pointer-events-none"></div>
@@ -494,121 +394,148 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
                     </button>
                   </div>
                   
-                  {renderTransactionTable(transaksiList.slice(0, 10))}
+                  <TransactionTable 
+                    list={transaksiList.slice(0, 10)} 
+                    loading={loading}
+                    t={t}
+                    lang={lang}
+                    formatRupiah={formatRupiah}
+                  />
                 </div>
-              </>
+              </motion.div>
             )}
 
             {activeMenu === 'history' && (
-              <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <h2 className="font-bold text-lg text-slate-900">{t.history_menu}</h2>
-                    <p className="text-sm text-slate-500">Riwayat transaksi berdasarkan filter di atas</p>
+              <motion.div
+                key="history"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                      <h2 className="font-bold text-lg text-slate-900">{t.history_menu}</h2>
+                      <p className="text-sm text-slate-500">Riwayat transaksi berdasarkan filter di atas</p>
+                    </div>
+                    <button 
+                      onClick={() => setShowModal(true)}
+                      className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-slate-200 hover:-translate-y-0.5 transition-all w-full md:w-auto justify-center"
+                    >
+                        <Plus size={16} /> {t.add_transaction}
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-slate-200 hover:-translate-y-0.5 transition-all w-full md:w-auto justify-center"
-                  >
-                      <Plus size={16} /> {t.add_transaction}
-                  </button>
+                  <TransactionTable 
+                    list={transaksiList.filter((trx: any) => {
+                      const matchesSearch = 
+                        (trx.keterangan?.toLowerCase().includes(searchTerm.toLowerCase())) || 
+                        (trx.nama_kategori?.toLowerCase().includes(searchTerm.toLowerCase()));
+                      return matchesSearch;
+                    })}
+                    loading={loading}
+                    t={t}
+                    lang={lang}
+                    formatRupiah={formatRupiah}
+                  />
                 </div>
-                {renderTransactionTable(
-                  transaksiList.filter((trx: any) => {
-                    const matchesSearch = 
-                      (trx.keterangan?.toLowerCase().includes(searchTerm.toLowerCase())) || 
-                      (trx.nama_kategori?.toLowerCase().includes(searchTerm.toLowerCase()));
-                    return matchesSearch;
-                  })
-                )}
-              </div>
+              </motion.div>
             )}
 
             {activeMenu === 'report' && (
-              <div className="space-y-6">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900">{t.report_title}</h2>
-                    <p className="text-sm text-slate-500">Statistik Pengeluaran & Ringkasan</p>
+              <motion.div
+                key="report"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="space-y-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">{t.report_title}</h2>
+                      <p className="text-sm text-slate-500">Statistik Pengeluaran & Ringkasan</p>
+                    </div>
+                    <button 
+                      onClick={handleDownloadPDF}
+                      className="flex items-center justify-center gap-2 w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md transition-all font-bold"
+                    >
+                      <Download size={18} /> {t.download_pdf}
+                    </button>
                   </div>
-                  <button 
-                    onClick={handleDownloadPDF}
-                    className="flex items-center justify-center gap-2 w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md transition-all font-bold"
-                  >
-                    <Download size={18} /> {t.download_pdf}
-                  </button>
-                </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Pie Chart */}
-                  <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200">
-                    <h3 className="text-lg font-bold text-slate-800 mb-6">Distribusi Pengeluaran</h3>
-                    <div className="h-[300px] w-full">
-                      {chartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RechartsPieChart>
-                            <Pie
-                              data={chartData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={100}
-                              paddingAngle={5}
-                              dataKey="value"
-                            >
-                              {chartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <RechartsTooltip 
-                              formatter={(value: number) => formatRupiah(value)}
-                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                            />
-                            <Legend />
-                          </RechartsPieChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                          <PieChart size={48} className="mb-4 opacity-50" />
-                          <p>Belum ada data pengeluaran</p>
-                        </div>
-                      )}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Pie Chart */}
+                    <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200">
+                      <h3 className="text-lg font-bold text-slate-800 mb-6">Distribusi Pengeluaran</h3>
+                      <div className="h-[300px] w-full">
+                        {chartData.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RechartsPieChart>
+                              <Pie
+                                data={chartData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={100}
+                                paddingAngle={5}
+                                dataKey="value"
+                              >
+                                {chartData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <RechartsTooltip 
+                                formatter={(value: number) => formatRupiah(value)}
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                              />
+                              <Legend />
+                            </RechartsPieChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                            <PieChart size={48} className="mb-4 opacity-50" />
+                            <p>Belum ada data pengeluaran</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Summary Cards */}
+                    <div className="space-y-4">
+                      <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200 flex items-center gap-4">
+                          <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                             <Wallet size={28} />
+                          </div>
+                          <div>
+                             <p className="text-sm font-bold text-slate-500 uppercase tracking-tighter">{t.total_balance}</p>
+                             <p className="text-2xl font-black text-slate-900">{formatRupiah(totalMasuk - totalKeluar)}</p>
+                          </div>
+                       </div>
+                       <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200 flex items-center gap-4">
+                          <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
+                             <DollarSign size={28} />
+                          </div>
+                          <div>
+                             <p className="text-sm font-bold text-slate-500 uppercase tracking-tighter">{t.total_income}</p>
+                             <p className="text-2xl font-black text-emerald-600">{formatRupiah(totalMasuk)}</p>
+                          </div>
+                       </div>
+                       <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200 flex items-center gap-4">
+                          <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center shrink-0">
+                             <ArrowRightLeft size={28} />
+                          </div>
+                          <div>
+                             <p className="text-sm font-bold text-slate-500 uppercase tracking-tighter">{t.total_expense}</p>
+                             <p className="text-2xl font-black text-rose-600">{formatRupiah(totalKeluar)}</p>
+                          </div>
+                       </div>
                     </div>
                   </div>
-
-                  {/* Summary Cards */}
-                  <div className="space-y-4">
-                     <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200 flex items-center gap-4">
-                        <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
-                           <Wallet size={28} />
-                        </div>
-                        <div>
-                           <p className="text-sm font-bold text-slate-500 uppercase tracking-tighter">{t.total_balance}</p>
-                           <p className="text-2xl font-black text-slate-900">{formatRupiah(totalMasuk - totalKeluar)}</p>
-                        </div>
-                     </div>
-                     <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200 flex items-center gap-4">
-                        <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
-                           <DollarSign size={28} />
-                        </div>
-                        <div>
-                           <p className="text-sm font-bold text-slate-500 uppercase tracking-tighter">{t.total_income}</p>
-                           <p className="text-2xl font-black text-emerald-600">{formatRupiah(totalMasuk)}</p>
-                        </div>
-                     </div>
-                     <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200 flex items-center gap-4">
-                        <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center shrink-0">
-                           <ArrowRightLeft size={28} />
-                        </div>
-                        <div>
-                           <p className="text-sm font-bold text-slate-500 uppercase tracking-tighter">{t.total_expense}</p>
-                           <p className="text-2xl font-black text-rose-600">{formatRupiah(totalKeluar)}</p>
-                        </div>
-                     </div>
-                  </div>
                 </div>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
         </div>
       </div>
 
@@ -758,3 +685,112 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
     </div>
   );
 }
+
+// Sub-komponen yang di-memoized untuk performa maksimal
+const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah }: any) => (
+  <div className="w-full">
+    {/* Desktop View Table */}
+    <div className="hidden md:block overflow-x-auto">
+      <table className="w-full text-left text-sm text-slate-600">
+        <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase text-[10px] tracking-wider">
+          <tr>
+            <th className="px-6 py-4">{t.date}</th>
+            <th className="px-6 py-4">{t.description}</th>
+            <th className="px-6 py-4">{t.category}</th>
+            <th className="px-6 py-4 text-right">{t.amount}</th>
+            <th className="px-6 py-4 text-center">{t.type}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {loading ? (
+            <tr>
+              <td colSpan={5} className="px-6 py-12 text-center text-slate-500 font-medium">
+                <Loader2 size={24} className="animate-spin text-blue-500 mx-auto mb-2" />
+                {t.loading}
+              </td>
+            </tr>
+          ) : list.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="px-6 py-16 text-center">
+                  <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Wallet size={32} />
+                  </div>
+                  <p className="text-slate-500 font-medium">{t.no_transactions}</p>
+                  <p className="text-slate-400 text-sm mt-1">{t.no_transactions_sub}</p>
+              </td>
+            </tr>
+          ) : (
+            list.map((trx: any) => (
+              <tr key={trx.id} className="hover:bg-slate-50/50 transition-colors">
+                <td className="px-6 py-4 font-medium text-slate-900">
+                  {new Date(trx.tanggal).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </td>
+                <td className="px-6 py-4 truncate max-w-[200px]">{trx.keterangan || '-'}</td>
+                <td className="px-6 py-4">
+                    <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold">
+                      {trx.nama_kategori || t.no_category}
+                    </span>
+                </td>
+                <td className={`px-6 py-4 font-bold text-right ${trx.tipe === 'masuk' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                  {trx.tipe === 'masuk' ? '+' : '-'} {formatRupiah(parseFloat(trx.nominal))}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  {trx.tipe === 'masuk' ? (
+                      <span className="inline-flex items-center justify-center px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-[10px] font-bold uppercase tracking-wider">{t.income}</span>
+                  ) : (
+                      <span className="inline-flex items-center justify-center px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-[10px] font-bold uppercase tracking-wider">{t.expense}</span>
+                  )}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Mobile View Card List */}
+    <div className="md:hidden divide-y divide-slate-100 bg-white">
+      {loading ? (
+        <div className="py-12 text-center text-slate-500">
+          <Loader2 size={24} className="animate-spin text-blue-500 mx-auto mb-2" />
+          {t.loading}
+        </div>
+      ) : list.length === 0 ? (
+        <div className="py-12 text-center px-6">
+          <div className="w-12 h-12 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Wallet size={24} />
+          </div>
+          <p className="text-slate-500 text-sm font-bold">{t.no_transactions}</p>
+        </div>
+      ) : (
+        list.map((trx: any) => (
+          <div key={trx.id} className="p-4 flex items-center justify-between hover:bg-slate-50 active:bg-slate-100 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${trx.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                 {trx.tipe === 'masuk' ? <DollarSign size={18} /> : <ArrowRightLeft size={18} />}
+              </div>
+              <div className="overflow-hidden">
+                 <p className="text-sm font-bold text-slate-900 truncate max-w-[150px]">{trx.keterangan || t.no_description}</p>
+                 <div className="flex items-center gap-2 mt-0.5">
+                   <span className="text-[10px] font-bold text-slate-400">
+                     {new Date(trx.tanggal).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' })}
+                   </span>
+                   <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                   <span className="text-[10px] font-bold text-blue-500 uppercase tracking-tight">{trx.nama_kategori || t.no_category}</span>
+                 </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className={`text-sm font-black whitespace-nowrap ${trx.tipe === 'masuk' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                {trx.tipe === 'masuk' ? '+' : '-'} {formatRupiah(parseFloat(trx.nominal))}
+              </p>
+              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${trx.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                {trx.tipe === 'masuk' ? t.income : t.expense}
+              </span>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+));

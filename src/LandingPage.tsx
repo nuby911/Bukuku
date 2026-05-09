@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -92,10 +92,8 @@ const translations = {
     cta_desc: "Join thousands of students who have switched to bukuku for smarter campus budget management.",
     cta_btn: "Register for Free Now"
   }
-};
-
-const ChaosText = ({ text, delayOffset = 0 }: { text: string, delayOffset?: number }) => {
-  const words = text.split(" ");
+};const ChaosText = React.memo(({ text, delayOffset = 0 }: { text: string, delayOffset?: number }) => {
+  const words = useMemo(() => text.split(" "), [text]);
   return (
     <>
       {words.map((word, wordIdx) => (
@@ -109,7 +107,7 @@ const ChaosText = ({ text, delayOffset = 0 }: { text: string, delayOffset?: numb
             return (
               <motion.span
                 key={charIdx}
-                className="inline-block cursor-default"
+                className="inline-block cursor-default will-change-transform"
                 initial={{ 
                   opacity: 0, 
                   y: randY * 2, 
@@ -123,10 +121,10 @@ const ChaosText = ({ text, delayOffset = 0 }: { text: string, delayOffset?: numb
                   y: -5,
                   transition: { type: "spring", stiffness: 400, damping: 10 }
                 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, margin: "-20px" }}
                 transition={{
                   duration: 0.8,
-                  delay: delayOffset + (wordIdx * 5 + charIdx) * 0.02,
+                  delay: delayOffset + (wordIdx * 5 + charIdx) * 0.01,
                   type: "spring",
                   damping: 12,
                   stiffness: 100
@@ -141,9 +139,9 @@ const ChaosText = ({ text, delayOffset = 0 }: { text: string, delayOffset?: numb
       ))}
     </>
   );
-};
+});
 
-const Navbar = ({ lang, setLang, t }: any) => {
+const Navbar = React.memo(({ lang, setLang, t }: any) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -160,26 +158,26 @@ const Navbar = ({ lang, setLang, t }: any) => {
           
           {/* Desktop Links - Hidden always per user request */}
           <div className="hidden items-center space-x-8 text-sm font-medium text-slate-600">
-            <a href="#fitur" className="hover:text-blue-600 transition-colors">{t.features}</a>
-            <a href="#kontak" className="hover:text-blue-600 transition-colors">{t.contact}</a>
+            <a href="#fitur" className="hover:text-blue-600 transition-colors uppercase tracking-widest">{t.features}</a>
+            <a href="#kontak" className="hover:text-blue-600 transition-colors uppercase tracking-widest">{t.contact}</a>
           </div>
 
           <div className="hidden items-center space-x-4">
              <button 
                onClick={() => setLang(lang === 'id' ? 'en' : 'id')} 
-               className="text-sm font-semibold px-3 py-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-2"
+               className="text-xs font-bold px-3 py-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-1 border border-slate-200"
              >
-               <Globe size={16} /> {lang === 'id' ? 'EN' : 'ID'}
+               <Globe size={14} /> {lang === 'id' ? 'EN' : 'ID'}
              </button>
             <button 
               onClick={() => navigate('/login')}
-              className="text-sm font-semibold px-4 py-2 text-slate-800 hover:text-blue-600 transition-colors"
+              className="text-sm font-bold px-4 py-2 text-slate-800 hover:text-blue-600 transition-colors"
             >
               {t.login}
             </button>
             <button 
               onClick={() => navigate('/login')}
-              className="text-sm font-semibold bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all hover:-translate-y-0.5"
+              className="text-sm font-bold bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all hover:-translate-y-0.5"
             >
               {t.register_free}
             </button>
@@ -189,7 +187,7 @@ const Navbar = ({ lang, setLang, t }: any) => {
           <div className="flex items-center gap-2">
              <button 
                onClick={() => setLang(lang === 'id' ? 'en' : 'id')} 
-               className="text-sm font-semibold px-2 py-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-1"
+               className="text-xs font-bold px-2 py-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-1"
              >
                <Globe size={16} /> {lang === 'id' ? 'EN' : 'ID'}
              </button>
@@ -224,7 +222,7 @@ const Navbar = ({ lang, setLang, t }: any) => {
                     setIsOpen(false);
                     navigate('/login');
                   }} 
-                  className="text-center font-semibold border border-slate-200 text-slate-700 px-5 py-3 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="text-center font-bold border border-slate-200 text-slate-700 px-5 py-3 rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   {t.login}
                 </button>
@@ -233,7 +231,7 @@ const Navbar = ({ lang, setLang, t }: any) => {
                     setIsOpen(false);
                     navigate('/login');
                   }} 
-                  className="text-center font-semibold bg-blue-600 text-white px-5 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors"
+                  className="text-center font-bold bg-blue-600 text-white px-5 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors"
                 >
                   {t.register_free}
                 </button>
@@ -244,21 +242,21 @@ const Navbar = ({ lang, setLang, t }: any) => {
       </AnimatePresence>
     </nav>
   );
-};
+});
 
-const DashboardMockup = ({ t }: any) => (
+const DashboardMockup = React.memo(({ t }: any) => (
   <motion.div 
     initial={{ opacity: 0, y: 40 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.8, delay: 0.2 }}
-    className="bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden flex relative ring-4 ring-white/50"
+    className="bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden flex relative ring-4 ring-white/50 will-change-transform"
   >
     <div className="w-56 bg-slate-50/50 border-r border-slate-100 p-6 hidden lg:flex flex-col gap-3">
         <div className="h-6 bg-slate-200/50 rounded animate-pulse mb-6 w-24"></div>
         <div className="h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center px-4 gap-3 text-sm font-bold">
           <LayoutDashboard size={18}/> <span>{t.dashboard}</span>
         </div>
-        <div className="h-10 text-slate-500 rounded-xl flex items-center px-4 gap-3 hover:bg-slate-100 transition-colors text-sm font-medium">
+        <div className="h-10 text-slate-500 rounded-xl flex items-center px-4 gap-3 hover:bg-slate-100 transition-colors text-sm font-medium text-blue">
           <ArrowRightLeft size={18}/> <span>{t.transactions}</span>
         </div>
         <div className="h-10 text-slate-500 rounded-xl flex items-center px-4 gap-3 hover:bg-slate-100 transition-colors text-sm font-medium">
@@ -299,10 +297,10 @@ const DashboardMockup = ({ t }: any) => (
        </div>
     </div>
   </motion.div>
-);
+));
 
-const FeaturesSection = ({ t }: any) => {
-  const features = [
+const FeaturesSection = React.memo(({ t }: any) => {
+  const features = useMemo(() => [
     {
       icon: <ArrowRightLeft className="w-6 h-6" />,
       title: t.feat_1_title,
@@ -323,14 +321,14 @@ const FeaturesSection = ({ t }: any) => {
       title: t.feat_4_title,
       desc: t.feat_4_desc
     }
-  ];
+  ], [t]);
 
   return (
     <section id="fitur" className="py-24 bg-slate-50 border-t border-slate-200/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
         <div className="text-center md:text-left max-w-2xl mb-12">
            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-4">{t.feature_title}</h2>
-           <p className="text-lg text-slate-500 leading-relaxed">{t.feature_desc}</p>
+           <p className="text-lg text-slate-500 leading-relaxed font-medium">{t.feature_desc}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -338,8 +336,8 @@ const FeaturesSection = ({ t }: any) => {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: idx * 0.05 }}
               key={idx} 
               className="bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
             >
@@ -347,31 +345,31 @@ const FeaturesSection = ({ t }: any) => {
                 {feature.icon}
               </div>
               <h4 className="font-bold text-slate-900 mb-2">{feature.title}</h4>
-              <p className="text-xs text-slate-500 leading-relaxed">{feature.desc}</p>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">{feature.desc}</p>
             </motion.div>
           ))}
         </div>
       </div>
     </section>
   );
-};
+});
 
-const HowItWorksSection = ({ t }: any) => {
-  const steps = [
+const HowItWorksSection = React.memo(({ t }: any) => {
+  const steps = useMemo(() => [
     { number: "01", title: t.step_1_title, desc: t.step_1_desc, icon: <Lock className="w-5 h-5" /> },
     { number: "02", title: t.step_2_title, desc: t.step_2_desc, icon: <ArrowRightLeft className="w-5 h-5" /> },
     { number: "03", title: t.step_3_title, desc: t.step_3_desc, icon: <BarChart3 className="w-5 h-5" /> }
-  ];
+  ], [t]);
 
   return (
-    <section id="cara-daftar" className="py-16 bg-slate-50 pb-24 scroll-mt-20">
+    <section id="cara-daftar" className="py-16 bg-slate-50 pb-24 scroll-mt-20 leading-relaxed">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
         <div className="bg-slate-900 text-white p-8 md:p-14 rounded-[3rem] shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 p-48 bg-blue-600/30 blur-[120px] rounded-full mix-blend-screen pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 p-32 bg-emerald-600/10 blur-[100px] rounded-full mix-blend-screen pointer-events-none"></div>
           
           <div className="relative z-10 mb-12 text-center md:text-left">
-            <h3 className="text-2xl md:text-3xl font-bold mb-2">Bagaimana Cara Memulai?</h3>
+            <h3 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight">Bagaimana Cara Memulai?</h3>
             <p className="text-slate-400 font-medium">Hanya butuh 3 langkah instan untuk digitalisasi keuangan Anda.</p>
           </div>
 
@@ -381,8 +379,8 @@ const HowItWorksSection = ({ t }: any) => {
                   <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.2 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{ delay: idx * 0.1 }}
                     className="flex flex-col items-center md:items-start space-y-4 shrink-0 group text-center md:text-left"
                   >
                     <div className="flex items-center gap-4">
@@ -406,12 +404,12 @@ const HowItWorksSection = ({ t }: any) => {
       </div>
     </section>
   );
-}
+});
 
-const Footer = ({ t }: any) => (
+const Footer = React.memo(({ t }: any) => (
   <footer id="kontak" className="px-4 sm:px-6 lg:px-10 py-8 bg-white border-t border-slate-200">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t.footer_copy}</p>
+      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{t.footer_copy}</p>
       <div className="flex flex-wrap items-center justify-center space-x-6 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
         <a href="#" className="hover:text-blue-600 transition-colors">{t.footer_privacy}</a>
         <a href="#" className="hover:text-blue-600 transition-colors">{t.footer_terms}</a>
@@ -428,7 +426,8 @@ const Footer = ({ t }: any) => (
       </div>
     </div>
   </footer>
-);
+));
+;
 
 export default function LandingPage() {
   const [lang, setLang] = useState<'id' | 'en'>('id');

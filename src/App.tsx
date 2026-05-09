@@ -1,13 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Wallet, LayoutDashboard, ArrowRightLeft, PieChart, Users, LogOut, ChevronRight
 } from 'lucide-react';
-import LandingPage from './LandingPage';
-import LoginPage from './pages/LoginPage';
-import AdminDashboard from './pages/AdminDashboard';
-import UserDashboard from './pages/UserDashboard';
+
+// Lazy load components for better performance
+const LandingPage = lazy(() => import('./LandingPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const UserDashboard = lazy(() => import('./pages/UserDashboard'));
+
+// Loading component for Suspense
+const PageLoader = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+    <p className="text-slate-500 font-medium">Bentar ya...</p>
+  </div>
+);
+
+const PageTransition = ({ children }: { children: React.ReactNode }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+  >
+    {children}
+  </motion.div>
+);
+
+function AppRoutes({ currentUser, token, handleLoginSuccess, handleLogout }: any) {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Suspense fallback={<PageLoader />}>
+        <Routes location={location}>
+          <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+          
+          <Route 
+            path="/login" 
+            element={
+              <PageTransition>
+                {!currentUser ? <LoginPage onAuthSuccess={handleLoginSuccess} /> : <Navigate to="/dashboard" />}
+              </PageTransition>
+            } 
+          />
+          
+          <Route 
+            path="/dashboard" 
+            element={
+              <PageTransition>
+                {currentUser && token ? (
+                  currentUser.role === 'super_admin' ? 
+                    <AdminDashboard user={currentUser} token={token} onLogout={handleLogout} /> 
+                    : 
+                    <UserDashboard user={currentUser} token={token} onLogout={handleLogout} />
+                ) : <Navigate to="/login" />}
+              </PageTransition>
+            } 
+          />
+        </Routes>
+      </Suspense>
+    </AnimatePresence>
+  );
+}
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -52,26 +110,12 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        
-        <Route 
-          path="/login" 
-          element={!currentUser ? <LoginPage onAuthSuccess={handleLoginSuccess} /> : <Navigate to="/dashboard" />} 
-        />
-        
-        <Route 
-          path="/dashboard" 
-          element={
-            currentUser && token ? (
-              currentUser.role === 'super_admin' ? 
-                <AdminDashboard user={currentUser} token={token} onLogout={handleLogout} /> 
-                : 
-                <UserDashboard user={currentUser} token={token} onLogout={handleLogout} />
-            ) : <Navigate to="/login" />
-          } 
-        />
-      </Routes>
+      <AppRoutes 
+        currentUser={currentUser} 
+        token={token} 
+        handleLoginSuccess={handleLoginSuccess} 
+        handleLogout={handleLogout} 
+      />
     </BrowserRouter>
   );
 }
