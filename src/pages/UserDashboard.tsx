@@ -45,36 +45,33 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
   const fetchTransaksi = useCallback(async () => {
     setLoading(true);
     try {
-      let url = '/api/transaksi?limit=100';
-      if (filterDays) url += `&days=${filterDays}`;
-      if (startDate) url += `&startDate=${startDate}`;
-      if (endDate) url += `&endDate=${endDate}`;
-      if (filterType !== 'all') url += `&tipe=${filterType}`;
+      // 1. Fetch List Transaksi (berdasarkan pagination/limit)
+      let listUrl = '/api/transaksi?limit=100';
+      if (filterDays) listUrl += `&days=${filterDays}`;
+      if (startDate) listUrl += `&startDate=${startDate}`;
+      if (endDate) listUrl += `&endDate=${endDate}`;
+      if (filterType !== 'all') listUrl += `&tipe=${filterType}`;
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // 2. Fetch Summary (Kalkulasi Server-Side untuk Akurasi 100%)
+      let summaryUrl = '/api/transaksi/summary?';
+      if (filterDays) summaryUrl += `days=${filterDays}`;
+      if (startDate) summaryUrl += `&startDate=${startDate}`;
+      if (endDate) summaryUrl += `&endDate=${endDate}`;
+
+      const [listRes, summaryRes] = await Promise.all([
+        fetch(listUrl, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(summaryUrl, { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
       
-      const data = await response.json();
+      const listData = await listRes.json();
+      const summaryData = await summaryRes.json();
       
-      if (!response.ok) {
-        throw new Error(data.error || t.error_fetch);
-      }
+      if (!listRes.ok) throw new Error(listData.error || t.error_fetch);
+      if (!summaryRes.ok) throw new Error(summaryData.error || t.error_fetch);
       
-      setTransaksiList(data.data);
-      
-      // Kalkulasi Total untuk Ringkasan
-      let masuk = 0;
-      let keluar = 0;
-      data.data.forEach((trx: any) => {
-         if (trx.tipe === 'masuk') masuk += parseFloat(trx.nominal);
-         if (trx.tipe === 'keluar') keluar += parseFloat(trx.nominal);
-      });
-      
-      setTotalMasuk(masuk);
-      setTotalKeluar(keluar);
+      setTransaksiList(listData.data);
+      setTotalMasuk(summaryData.totalMasuk);
+      setTotalKeluar(summaryData.totalKeluar);
 
     } catch (err: any) {
       setError(err.message || t.error_fetch);

@@ -1,14 +1,22 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
 import { verifyToken } from '../middleware/authMiddleware.js';
-import { createTransaksi, getTransaksi } from '../controllers/transaksiController.js';
+import { createTransaksi, getTransaksi, getTransaksiSummary } from '../controllers/transaksiController.js';
 
 const router = Router();
-
-// CRUCIAL: Global Middleware Lock 
-// Memastikan semua rute di bawah "router" ini _hanya_ dapat disentuh 
-// apabila Header mengandung Bearer JWT yang Valid
+// ...
 router.use(verifyToken);
+
+// Endpoint [GET] - Ambil Ringkasan Saldo (Pemasukan, Pengeluaran)
+router.get(
+  '/summary',
+  [
+    query('startDate').optional().matches(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/).escape(),
+    query('endDate').optional().matches(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/).escape(),
+    query('days').optional().isInt({ min: 1 }).toInt().escape(),
+  ],
+  getTransaksiSummary
+);
 
 // Endpoint [POST] - Input Transaksi Baru
 router.post(

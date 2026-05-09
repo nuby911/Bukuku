@@ -1,10 +1,10 @@
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import { pool } from '../config/db.js';
 import { AuthRequest } from '../middleware/authMiddleware.js';
 import { validationResult } from 'express-validator';
 import { getOrCreateKategori } from '../services/transactionService.js';
 
-export const createTransaksi = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createTransaksi = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -12,12 +12,9 @@ export const createTransaksi = async (req: AuthRequest, res: Response): Promise<
        return;
     }
 
-    // MULTI-TENANT FATAL SECURITY: Identitas Client (User ID) _HARUS_ selalu kita periksa dari
-    // Token yang sudah divalidasi server, bukan dari Body Request buatan client yang bisa di spoofing/inject.
     const userId = req.user?.id; 
     const { kategori_nama, tanggal, keterangan, tipe } = req.body;
     
-    // Pembersihan input nominal (format ribuan seperti '1.000.000' dibersihkan)
     let { nominal } = req.body;
     let cleanNominalStr = nominal ? nominal.toString().replace(/[^0-9]/g, '') : '0';
     
@@ -26,13 +23,12 @@ export const createTransaksi = async (req: AuthRequest, res: Response): Promise<
        return;
     }
     
-    const parsedNominal = BigInt(cleanNominalStr); // atau bisa juga Number/Decimal menyesuaikan schema
+    const parsedNominal = BigInt(cleanNominalStr); 
     if (parsedNominal <= 0n) {
        res.status(400).json({ error: 'Nominal harus lebih besar dari Rp 0.' });
        return;
     }
 
-    // Upsert Kategori using Service
     const kategori_id = await getOrCreateKategori(userId!, kategori_nama, tipe);
 
     const insertResult = await pool.query(
@@ -47,26 +43,20 @@ export const createTransaksi = async (req: AuthRequest, res: Response): Promise<
       data: insertResult.rows[0]
     });
   } catch (error) {
-    console.error('Create Transaksi Controller Error:', error);
-    res.status(500).json({ error: 'Terjadi kesalahan back-end karena kegagalan database.' });
+    next(error);
   }
 };
 
-export const getTransaksi = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getTransaksi = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    // 1. ISOLASI DATA MULTI-TENANT
-    // Tanpa Filter ini, satu pengguna dapat meretas API (IDOR) dan melihat data dompet semua pendaftar.
     const userId = req.user?.id;
     
-    // 2. PAGINATION DESTRUCTURING
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     
-    // DDOS Shield: Batasi agar maksimal memuat 100 baris dalam sekali tembakan API
     const safeLimit = limit > 100 ? 100 : Math.max(1, limit);
     const offset = (Math.max(1, page) - 1) * safeLimit;
 
-    // 3. OPTIONAL FILTERING UNTUK LAPORAN
     const { tipe, startDate, endDate, days } = req.query;
 
     const queryParams: any[] = [userId];
@@ -79,7 +69,6 @@ export const getTransaksi = async (req: AuthRequest, res: Response): Promise<voi
       paramIndex++;
     }
 
-    // Days filter logic (Quick Filter)
     if (days && !startDate && !endDate) {
       const daysCount = parseInt(days as string);
       const today = new Date();
@@ -108,14 +97,12 @@ export const getTransaksi = async (req: AuthRequest, res: Response): Promise<voi
       }
     }
 
-    // 4. EKSEKUSI PENGHITUNGAN TOTAL RECORD (Keperluan UI Page Numbers)
     const countResult = await pool.query(
       `SELECT COUNT(t.id) FROM transaksi t ${queryOptions}`,
       queryParams
     );
     const totalItems = parseInt(countResult.rows[0].count);
 
-    // 5. QUERY DATA DENGAN JOIN (Untuk Menampilkan Label Kategori Secara Mudah di View) 
     const dataQuery = `
       SELECT t.id, t.tanggal, t.nominal, t.keterangan, t.tipe, k.nama_kategori 
       FROM transaksi t
@@ -129,7 +116,6 @@ export const getTransaksi = async (req: AuthRequest, res: Response): Promise<voi
     
     const dataResult = await pool.query(dataQuery, queryParams);
 
-    // 6. KEMBALIKAN PAYLOAD HYBRID BESERTA METADATA
     res.status(200).json({
       message: 'Transaksi berhasil dimuat',
       data: dataResult.rows,
@@ -143,7 +129,59 @@ export const getTransaksi = async (req: AuthRequest, res: Response): Promise<voi
     });
 
   } catch (error) {
-    console.error('Get Transaksi Controller Error:', error);
-    res.status(500).json({ error: 'Peladen (Server) mendapati kegagalan me-render list Transaksi' });
+    next(error);
+  }
+};
+
+export const getTransaksiSummary = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { startDate, endDate, days } = req.query;
+
+    const queryParams: any[] = [userId];
+    let queryOptions = `WHERE user_id = $1`;
+    let paramIndex = 2;
+
+    if (days && !startDate && !endDate) {
+      const daysCount = parseInt(days as string);
+      const today = new Date();
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - (daysCount - 1));
+      
+      const startDateStr = pastDate.toISOString().split('T')[0];
+      const endDateStr = today.toISOString().split('T')[0];
+      
+      queryOptions += ` AND tanggal BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
+      queryParams.push(startDateStr, endDateStr);
+      paramIndex += 2;
+    } else {
+      if (startDate && endDate) {
+         queryOptions += ` AND tanggal BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
+         queryParams.push(startDate, endDate);
+      } else if (startDate) {
+         queryOptions += ` AND tanggal >= $${paramIndex}`;
+         queryParams.push(startDate);
+      } else if (endDate) {
+         queryOptions += ` AND tanggal <= $${paramIndex}`;
+         queryParams.push(endDate);
+      }
+    }
+
+    const summaryQuery = `
+      SELECT 
+        COALESCE(SUM(CASE WHEN tipe = 'masuk' THEN nominal::numeric ELSE 0 END), 0) as total_masuk,
+        COALESCE(SUM(CASE WHEN tipe = 'keluar' THEN nominal::numeric ELSE 0 END), 0) as total_keluar
+      FROM transaksi
+      ${queryOptions}
+    `;
+
+    const result = await pool.query(summaryQuery, queryParams);
+    
+    res.status(200).json({
+      totalMasuk: parseFloat(result.rows[0].total_masuk),
+      totalKeluar: parseFloat(result.rows[0].total_keluar)
+    });
+  } catch (error) {
+    next(error);
   }
 };

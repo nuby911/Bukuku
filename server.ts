@@ -9,8 +9,8 @@ import { errorHandler } from './src/server/middleware/errorMiddleware.js';
 
 async function startServer() {
   const app = express();
-  // PORT fixed to 3000 mapping for AI Studio Reverse Proxy requirements
-  const PORT = 3000;
+  // PORT adapts to environment for Cloud Run compatibility
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Global Middlewares Setting
   app.use(cors());
@@ -48,7 +48,9 @@ async function startServer() {
 
   // Menginkubasi Express Server
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`BukuKas Backend Server berhasil menyala di Host: 0.0.0.0 Port: ${PORT}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`bukuku (Dev) Backend Server running on http://localhost:${PORT}`);
+    }
   });
 }
 

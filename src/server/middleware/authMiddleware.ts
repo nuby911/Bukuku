@@ -1,7 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_development_key';
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL: JWT_SECRET environment variable is missing! Set it in Settings > Secrets.');
+    }
+    return 'supersecret_development_key';
+  }
+  return secret;
+};
 
 // Mewariskan interface Request Express untuk menampung data user hasil dekripsi token
 export interface AuthRequest extends Request {
@@ -25,7 +34,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
     const token = authHeader.split(' ')[1];
     
     // Evaluasi integritas & kedaluwarsa JWT secara sinkron
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string, role: string };
+    const decoded = jwt.verify(token, getJwtSecret()) as { id: string; email: string, role: string };
     
     // Inject identitas user ke object Request agar endpoint bisa menggunakannya secara aman
     req.user = decoded;
@@ -33,7 +42,9 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
     // Lanjutkan ke handler endpoint selanjutnya
     next();
   } catch (error) {
-    console.error('Verifikasi Token Gagal:', error instanceof Error ? error.message : error);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Verifikasi Token Gagal:', error instanceof Error ? error.message : error);
+    }
     res.status(403).json({ error: 'Akses Ditolak: Sesi anda tidak valid atau sudah kadaluarsa (Harap login kembali)' });
   }
 };

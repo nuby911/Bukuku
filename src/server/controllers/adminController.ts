@@ -1,8 +1,8 @@
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import { pool } from '../config/db.js';
 import { AuthRequest } from '../middleware/authMiddleware.js';
 
-export const getAllUsers = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getAllUsers = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 50;
@@ -34,11 +34,9 @@ export const getAllUsers = async (req: AuthRequest, res: Response): Promise<void
       usersValues = [safeLimit, offset];
     }
 
-    // Get count for pagination
     const countResult = await pool.query(countQuery, countValues);
     const totalItems = parseInt(countResult.rows[0].count);
 
-    // Get users based on search and pagination
     const usersResult = await pool.query(usersQuery, usersValues);
 
     res.status(200).json({
@@ -53,16 +51,14 @@ export const getAllUsers = async (req: AuthRequest, res: Response): Promise<void
       }
     });
   } catch (error) {
-    console.error('Admin Controller Error (getAllUsers):', error);
-    res.status(500).json({ error: 'Terjadi kegagalan saat mengambil data pengguna dari database.' });
+    next(error);
   }
 };
 
-export const deleteUser = async (req: AuthRequest, res: Response): Promise<void> => {
+export const deleteUser = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.params.id;
     
-    // Prevent deleting oneself
     if (userId === req.user?.id) {
        res.status(400).json({ error: 'Anda tidak dapat menghapus akun Anda sendiri.' });
        return;
@@ -79,17 +75,14 @@ export const deleteUser = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    // Manual cascade delete just in case 'ON DELETE CASCADE' is not set
     await pool.query('DELETE FROM transaksi WHERE user_id = $1', [userId]);
     await pool.query('DELETE FROM kategori_transaksi WHERE user_id = $1', [userId]);
     
-    // Delete the user
     await pool.query('DELETE FROM users WHERE id = $1', [userId]);
     
-    res.status(200).json({ message: 'Pengguna dan seluruh datanya (kategori dan transaksi) berhasil dihapus secara permanen.' });
+    res.status(200).json({ message: 'Pengguna dan seluruh datanya berhasil dihapus secara permanen.' });
   } catch (error) {
-    console.error('Admin Controller Error (deleteUser):', error);
-    res.status(500).json({ error: 'Terjadi kegagalan saat menghapus pengguna.' });
+    next(error);
   }
 };
 
