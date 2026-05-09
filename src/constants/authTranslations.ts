@@ -4,7 +4,7 @@ export const authTranslations = {
     back_to_home: "Kembali ke Beranda",
     register_title: "Bikin Akun bukuku",
     login_title: "Halo Mahasiswa!",
-    register_subtitle: "Mulai atur keuangan kampusmu",
+    register_subtitle: "Mulai atur keuangan Mu",
     login_subtitle: "Silakan masuk ke akun bukuku",
     full_name: "Nama Lengkap",
     full_name_placeholder: "Misal: Rubby ganteng",
