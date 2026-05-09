@@ -132,9 +132,10 @@ export default function AdminDashboard({ user, token, onLogout }: { user: any, t
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
+    <div className="min-h-screen bg-slate-50">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 mb-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
            <div>
              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">{t.admin_panel}</h1>
              <p className="text-sm md:text-base text-slate-500">{t.welcome}, {user.nama_lengkap}.</p>
@@ -150,8 +151,10 @@ export default function AdminDashboard({ user, token, onLogout }: { user: any, t
                <LogOut size={18} /> {t.logout}
              </button>
            </div>
-        </header>
+        </div>
+      </header>
 
+      <div className="max-w-6xl mx-auto px-6 pb-12">
         {error && (
           <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl font-medium">
             {t.error_header}{error}{t.error_footer}

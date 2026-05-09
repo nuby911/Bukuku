@@ -332,7 +332,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col md:max-h-screen md:overflow-hidden min-h-screen pb-20 md:pb-0">
-        <header className="px-4 sm:px-8 py-4 sm:py-6 bg-white/80 backdrop-blur-md border-b border-slate-200 flex justify-between items-center z-10 sticky top-0">
+        <header className="px-4 sm:px-8 py-4 sm:py-6 bg-white/80 backdrop-blur-md border-b border-slate-200 flex justify-between items-center z-30 sticky top-0">
            <div>
              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
                {activeMenu === 'summary' ? t.summary : activeMenu === 'history' ? t.history_menu : t.report_menu}

@@ -81,31 +81,45 @@ export default function LoginPage({ onAuthSuccess }: { onAuthSuccess: (user: any
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="bg-white p-8 sm:p-10 rounded-[2rem] shadow-2xl border border-slate-100 w-full max-w-md relative">
-        <button 
-          type="button"
-          onClick={() => {
-            if (authState !== 'login') {
-              setAuthState('login');
-              setError('');
-              setSuccess('');
-            } else {
-              navigate('/');
-            }
-          }}
-          className="absolute top-6 left-6 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center p-2 rounded-full hover:bg-slate-100"
-          title={authState !== 'login' ? t.back_to_login : t.back_to_home}
-        >
-          <ArrowLeft size={20} />
-        </button>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Sticky Top Navbar */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 w-full px-6 py-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+              <Wallet size={16} className="text-white" />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-slate-900">bukuku</span>
+          </div>
+          <button 
+            onClick={() => setLang(lang === 'id' ? 'en' : 'id')} 
+            className="text-xs font-semibold px-3 py-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-1 border border-slate-200"
+          >
+            <Globe size={14} /> {lang === 'id' ? 'EN' : 'ID'}
+          </button>
+        </div>
+      </nav>
 
-        <button 
-          onClick={() => setLang(lang === 'id' ? 'en' : 'id')} 
-          className="absolute top-6 right-6 text-xs font-semibold px-2 py-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-1 border border-transparent shadow-sm hover:border-slate-200"
-        >
-          <Globe size={14} /> {lang === 'id' ? 'EN' : 'ID'}
-        </button>
+      <div className="flex-1 flex items-center justify-center p-4">
+        <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="bg-white p-8 sm:p-10 rounded-[2rem] shadow-2xl border border-slate-100 w-full max-w-md relative">
+          <button 
+            type="button"
+            onClick={() => {
+              if (authState !== 'login') {
+                setAuthState('login');
+                setError('');
+                setSuccess('');
+              } else {
+                navigate('/');
+              }
+            }}
+            className="absolute top-6 left-6 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center p-2 rounded-full hover:bg-slate-100"
+            title={authState !== 'login' ? t.back_to_login : t.back_to_home}
+          >
+            <ArrowLeft size={20} />
+          </button>
+
+          {/* Remove the redundant globe button here if I have it in navbar */}
 
         <div className="text-center mb-8 mt-2">
            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
@@ -241,5 +255,6 @@ export default function LoginPage({ onAuthSuccess }: { onAuthSuccess: (user: any
         </div>
       </motion.div>
     </div>
+  </div>
   );
 }

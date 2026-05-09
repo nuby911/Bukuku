@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Menu, X, Wallet, LayoutDashboard, PieChart, ArrowRightLeft, 
@@ -148,7 +148,7 @@ const Navbar = ({ lang, setLang, t }: any) => {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed w-full bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-4 lg:py-5">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-3">
@@ -158,12 +158,13 @@ const Navbar = ({ lang, setLang, t }: any) => {
             <span className="text-xl font-bold tracking-tight text-slate-900">bukuku</span>
           </div>
           
-          <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
+          {/* Desktop Links - Hidden always per user request */}
+          <div className="hidden items-center space-x-8 text-sm font-medium text-slate-600">
             <a href="#fitur" className="hover:text-blue-600 transition-colors">{t.features}</a>
             <a href="#kontak" className="hover:text-blue-600 transition-colors">{t.contact}</a>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden items-center space-x-4">
              <button 
                onClick={() => setLang(lang === 'id' ? 'en' : 'id')} 
                className="text-sm font-semibold px-3 py-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-2"
@@ -184,7 +185,8 @@ const Navbar = ({ lang, setLang, t }: any) => {
             </button>
           </div>
 
-          <div className="md:hidden flex items-center gap-2">
+          {/* Hamburger Menu - Always visible now */}
+          <div className="flex items-center gap-2">
              <button 
                onClick={() => setLang(lang === 'id' ? 'en' : 'id')} 
                className="text-sm font-semibold px-2 py-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-1"
@@ -198,19 +200,48 @@ const Navbar = ({ lang, setLang, t }: any) => {
         </div>
       </div>
 
-      {isOpen && (
-        <div className="md:hidden bg-white border-t border-slate-100 p-6 absolute w-full left-0 shadow-2xl">
-          <div className="flex flex-col space-y-4 text-sm font-medium">
-            <a href="#fitur" onClick={() => setIsOpen(false)} className="text-slate-600 hover:text-blue-600 p-2 rounded-lg hover:bg-slate-50">{t.features}</a>
-            <a href="#kontak" onClick={() => setIsOpen(false)} className="text-slate-600 hover:text-blue-600 p-2 rounded-lg hover:bg-slate-50">{t.contact}</a>
-            <hr className="border-slate-100 my-2" />
-            <div className="flex flex-col gap-3 pt-2">
-              <button onClick={() => navigate('/login')} className="text-center font-semibold border border-slate-200 text-slate-700 px-5 py-3 rounded-xl hover:bg-slate-50 transition-colors">{t.login}</button>
-              <button onClick={() => navigate('/login')} className="text-center font-semibold bg-blue-600 text-white px-5 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors">{t.register_free}</button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 100, 
+              damping: 20,
+              mass: 1
+            }}
+            className="bg-white border-t border-slate-100 p-6 absolute w-full left-0 shadow-2xl z-50 overflow-hidden"
+          >
+            <div className="flex flex-col space-y-4 text-sm font-medium max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
+              <a href="#fitur" onClick={() => setIsOpen(false)} className="text-slate-600 hover:text-blue-600 p-2 rounded-lg hover:bg-slate-50">{t.features}</a>
+              <a href="#kontak" onClick={() => setIsOpen(false)} className="text-slate-600 hover:text-blue-600 p-2 rounded-lg hover:bg-slate-50">{t.contact}</a>
+              <hr className="border-slate-100 my-2" />
+              <div className="flex flex-col gap-3 pt-2">
+                <button 
+                  onClick={() => {
+                    setIsOpen(false);
+                    navigate('/login');
+                  }} 
+                  className="text-center font-semibold border border-slate-200 text-slate-700 px-5 py-3 rounded-xl hover:bg-slate-50 transition-colors"
+                >
+                  {t.login}
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsOpen(false);
+                    navigate('/login');
+                  }} 
+                  className="text-center font-semibold bg-blue-600 text-white px-5 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors"
+                >
+                  {t.register_free}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
