@@ -37,7 +37,12 @@ export const dashboardTranslations = {
      download_pdf: "Unduh Laporan",
      report_title: "Laporan Keuangan",
      income_expense_chart: "Pemasukan vs Pengeluaran",
-     no_description: "Tidak ada catatan"
+     no_description: "Tidak ada catatan",
+     edit: "Ubah",
+     edit_transaction_title: "Ubah Catatan Keuangan",
+     update: "Perbarui Catatan",
+     updating: "Memperbarui...",
+     error_update: "Gagal memperbarui catatan"
   },
   en: {
      summary: "Wallet Summary",
@@ -77,6 +82,11 @@ export const dashboardTranslations = {
      download_pdf: "Download Report",
      report_title: "Financial Report",
      income_expense_chart: "Income vs Expenses",
-     no_description: "No details"
+     no_description: "No details",
+     edit: "Edit",
+     edit_transaction_title: "Edit Financial Record",
+     update: "Update Record",
+     updating: "Updating...",
+     error_update: "Failed to update record"
   }
 };

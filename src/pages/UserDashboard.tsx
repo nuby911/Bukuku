@@ -21,6 +21,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
   
   const [totalMasuk, setTotalMasuk] = useState(0);
   const [totalKeluar, setTotalKeluar] = useState(0);
+  const [editItem, setEditItem] = useState<string | null>(null);
 
   // Filter & Search State
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,8 +92,10 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
     setSubmitError('');
 
     try {
-      const response = await fetch('/api/transaksi', {
-        method: 'POST',
+      const url = editItem ? `/api/transaksi/${editItem}` : '/api/transaksi';
+      const method = editItem ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -101,9 +104,10 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
       });
       
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || t.error_submit);
+      if (!response.ok) throw new Error(data.error || (editItem ? t.error_update : t.error_submit));
 
       setShowModal(false);
+      setEditItem(null);
       setFormData({
         tipe: 'keluar',
         kategori_nama: '',
@@ -113,10 +117,34 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
       });
       fetchTransaksi(); // Refresh data
     } catch (err: any) {
-      setSubmitError(err.message || t.error_submit);
+      setSubmitError(err.message || (editItem ? t.error_update : t.error_submit));
     } finally {
       setSubmitLoading(false);
     }
+  };
+
+  const handleEditClick = (trx: any) => {
+    setEditItem(trx.id);
+    setFormData({
+      tipe: trx.tipe,
+      kategori_nama: trx.nama_kategori || '',
+      tanggal: new Date(trx.tanggal).toISOString().split('T')[0],
+      nominal: parseInt(trx.nominal).toLocaleString('id-ID'),
+      keterangan: trx.keterangan || ''
+    });
+    setShowModal(true);
+  };
+
+  const openAddModal = () => {
+    setEditItem(null);
+    setFormData({
+      tipe: 'keluar',
+      kategori_nama: '',
+      tanggal: new Date().toISOString().split('T')[0],
+      nominal: '',
+      keterangan: ''
+    });
+    setShowModal(true);
   };
 
   // Format Rupiah memoized
@@ -232,21 +260,25 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
              </h1>
              <p className="text-[10px] sm:text-sm font-medium text-slate-500 mt-1">{t.subtitle}</p>
            </div>
-           <div className="flex items-center gap-2 sm:gap-4">
-               <button 
-                 onClick={() => setLang(lang === 'id' ? 'en' : 'id')} 
-                 className="flex items-center gap-2 text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl transition-colors font-medium border border-slate-200 text-xs sm:text-sm"
-               >
-                 <Globe size={14} /> {lang === 'id' ? 'EN' : 'ID'}
-               </button>
-               <div className="text-right hidden lg:block">
-                  <p className="text-sm font-bold text-slate-900">{user.nama_lengkap}</p>
-                  <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">{t.owner}</p>
-               </div>
-               <button onClick={onLogout} className="text-slate-400 hover:bg-rose-50 hover:text-rose-600 p-2 sm:p-2.5 rounded-xl transition-all shadow-sm border border-slate-100">
-                 <LogOut size={18} />
-               </button>
-           </div>
+           <div className="flex items-center gap-1.5 sm:gap-4">
+                <div className="text-left border-r border-slate-200 pr-2 sm:pr-4">
+                   <p className="text-[10px] sm:text-sm font-bold text-slate-900 leading-tight truncate max-w-[80px] sm:max-w-none">{user.nama_lengkap}</p>
+                   <p className="text-[8px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-400">{t.owner}</p>
+                </div>
+
+                <div className="flex items-center gap-1 sm:gap-2 bg-slate-100/50 p-1 rounded-2xl border border-slate-200/50">
+                    <button 
+                      onClick={() => setLang(lang === 'id' ? 'en' : 'id')} 
+                      className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 bg-white px-2 py-1.5 rounded-[10px] transition-all font-bold border border-slate-200 shadow-sm text-[10px] sm:text-xs"
+                    >
+                      <Globe size={12} className="text-slate-400" /> {lang === 'id' ? 'EN' : 'ID'}
+                    </button>
+                    
+                    <button onClick={onLogout} className="text-slate-400 hover:bg-rose-50 hover:text-rose-600 p-1.5 rounded-[10px] transition-all bg-white border border-slate-200 shadow-sm">
+                      <LogOut size={16} />
+                    </button>
+                </div>
+            </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-8">
@@ -387,7 +419,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
                   <div className="p-4 flex-col sm:flex-row sm:p-6 sm:px-8 border-b border-slate-100 flex sm:justify-between items-start sm:items-center gap-4">
                     <h2 className="font-bold text-lg text-slate-900">{t.recent_transactions}</h2>
                     <button 
-                      onClick={() => setShowModal(true)}
+                      onClick={openAddModal}
                       className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-slate-200 hover:-translate-y-0.5 transition-all"
                     >
                         <Plus size={16} /> {t.add_transaction}
@@ -400,6 +432,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
                     t={t}
                     lang={lang}
                     formatRupiah={formatRupiah}
+                    onEdit={handleEditClick}
                   />
                 </div>
               </motion.div>
@@ -420,7 +453,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
                       <p className="text-sm text-slate-500">Riwayat transaksi berdasarkan filter di atas</p>
                     </div>
                     <button 
-                      onClick={() => setShowModal(true)}
+                      onClick={openAddModal}
                       className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-slate-200 hover:-translate-y-0.5 transition-all w-full md:w-auto justify-center"
                     >
                         <Plus size={16} /> {t.add_transaction}
@@ -437,6 +470,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
                     t={t}
                     lang={lang}
                     formatRupiah={formatRupiah}
+                    onEdit={handleEditClick}
                   />
                 </div>
               </motion.div>
@@ -550,7 +584,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
               <X size={20} />
             </button>
             <div className="p-8">
-               <h3 className="text-xl font-bold text-slate-900 mb-6">{t.add_transaction_title}</h3>
+               <h3 className="text-xl font-bold text-slate-900 mb-6">{editItem ? t.edit_transaction_title : t.add_transaction_title}</h3>
                
                {submitError && (
                  <div className="mb-4 p-3 bg-rose-50 text-rose-600 text-sm font-medium rounded-xl border border-rose-100">
@@ -641,7 +675,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
                    className="w-full py-4 mt-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
                  >
                    {submitLoading ? <Loader2 size={18} className="animate-spin" /> : <Wallet size={18} />}
-                   {submitLoading ? t.saving : t.save}
+                   {submitLoading ? (editItem ? t.updating : t.saving) : (editItem ? t.update : t.save)}
                  </button>
 
                </form>
@@ -674,7 +708,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
           </button>
           <div className="w-[1px] h-6 bg-slate-200 mx-1"></div>
           <button 
-            onClick={() => setShowModal(true)}
+            onClick={openAddModal}
             className="p-3 bg-slate-900 text-white rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all flex flex-col items-center gap-1"
           >
              <Plus size={20} />
@@ -687,7 +721,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
 }
 
 // Sub-komponen yang di-memoized untuk performa maksimal
-const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah }: any) => (
+const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah, onEdit }: any) => (
   <div className="w-full">
     {/* Desktop View Table */}
     <div className="hidden md:block overflow-x-auto">
@@ -699,19 +733,20 @@ const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah }: a
             <th className="px-6 py-4">{t.category}</th>
             <th className="px-6 py-4 text-right">{t.amount}</th>
             <th className="px-6 py-4 text-center">{t.type}</th>
+            <th className="px-6 py-4 text-center">Aksi</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
           {loading ? (
             <tr>
-              <td colSpan={5} className="px-6 py-12 text-center text-slate-500 font-medium">
+              <td colSpan={6} className="px-6 py-12 text-center text-slate-500 font-medium">
                 <Loader2 size={24} className="animate-spin text-blue-500 mx-auto mb-2" />
                 {t.loading}
               </td>
             </tr>
           ) : list.length === 0 ? (
             <tr>
-              <td colSpan={5} className="px-6 py-16 text-center">
+              <td colSpan={6} className="px-6 py-16 text-center">
                   <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Wallet size={32} />
                   </div>
@@ -741,6 +776,14 @@ const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah }: a
                       <span className="inline-flex items-center justify-center px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-[10px] font-bold uppercase tracking-wider">{t.expense}</span>
                   )}
                 </td>
+                <td className="px-6 py-4 text-center">
+                  <button 
+                    onClick={() => onEdit(trx)}
+                    className="text-blue-500 hover:text-blue-700 font-bold text-xs"
+                  >
+                    {t.edit}
+                  </button>
+                </td>
               </tr>
             ))
           )}
@@ -764,7 +807,7 @@ const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah }: a
         </div>
       ) : (
         list.map((trx: any) => (
-          <div key={trx.id} className="p-4 flex items-center justify-between hover:bg-slate-50 active:bg-slate-100 transition-colors">
+          <div key={trx.id} className="p-4 flex items-center justify-between hover:bg-slate-50 active:bg-slate-100 transition-colors" onClick={() => onEdit(trx)}>
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${trx.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                  {trx.tipe === 'masuk' ? <DollarSign size={18} /> : <ArrowRightLeft size={18} />}
@@ -784,9 +827,12 @@ const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah }: a
               <p className={`text-sm font-black whitespace-nowrap ${trx.tipe === 'masuk' ? 'text-emerald-600' : 'text-slate-900'}`}>
                 {trx.tipe === 'masuk' ? '+' : '-'} {formatRupiah(parseFloat(trx.nominal))}
               </p>
-              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${trx.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                {trx.tipe === 'masuk' ? t.income : t.expense}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${trx.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                  {trx.tipe === 'masuk' ? t.income : t.expense}
+                </span>
+                <span className="text-[9px] text-blue-500 font-bold">{t.edit}</span>
+              </div>
             </div>
           </div>
         ))

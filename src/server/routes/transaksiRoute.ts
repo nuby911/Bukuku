@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
 import { verifyToken } from '../middleware/authMiddleware.js';
-import { createTransaksi, getTransaksi, getTransaksiSummary } from '../controllers/transaksiController.js';
+import { createTransaksi, getTransaksi, getTransaksiSummary, updateTransaksi } from '../controllers/transaksiController.js';
 
 const router = Router();
 // ...
@@ -46,6 +46,34 @@ router.post(
       .isIn(['masuk', 'keluar']).withMessage('Tipe arus kas keliru. Gunakan: "masuk" / "keluar"')
   ],
   createTransaksi
+);
+
+// Endpoint [PUT] - Update Transaksi
+router.put(
+  '/:id',
+  [
+    body('kategori_nama').optional().isString().trim().escape().withMessage('Kategori harus berupa teks'),
+    body('tanggal')
+      .isISO8601().withMessage('Tanggal transaksi wajib berformat ISO 8601 (YYYY-MM-DD)')
+      .escape(),
+    body('nominal')
+      .notEmpty().withMessage('Nominal wajib diisi')
+      .custom((value) => {
+        const cleanedValue = value.toString().replace(/[^0-9]/g, '');
+        if (!/^[0-9]+$/.test(cleanedValue) || Number(cleanedValue) <= 0) {
+          throw new Error('Nominal harus berupa angka lebih besar dari Rp 0');
+        }
+        return true;
+      }),
+    body('keterangan')
+      .optional()
+      .isString()
+      .trim()
+      .escape(),
+    body('tipe')
+      .isIn(['masuk', 'keluar']).withMessage('Tipe arus kas keliru. Gunakan: "masuk" / "keluar"')
+  ],
+  updateTransaksi
 );
 
 // Endpoint [GET] - Ambil Laporan Semua Transaksi

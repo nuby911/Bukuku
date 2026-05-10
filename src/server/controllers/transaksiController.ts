@@ -185,3 +185,55 @@ export const getTransaksiSummary = async (req: AuthRequest, res: Response, next:
     next(error);
   }
 };
+
+export const updateTransaksi = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+       res.status(400).json({ errors: errors.array() });
+       return;
+    }
+
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const { kategori_nama, tanggal, keterangan, tipe } = req.body;
+    
+    let { nominal } = req.body;
+    let cleanNominalStr = nominal ? nominal.toString().replace(/[^0-9]/g, '') : '0';
+    
+    if (!/^[0-9]+$/.test(cleanNominalStr)) {
+       res.status(400).json({ error: 'Format Nominal tidak valid, harus berisi angka.' });
+       return;
+    }
+    
+    const parsedNominal = BigInt(cleanNominalStr);
+    if (parsedNominal <= 0n) {
+       res.status(400).json({ error: 'Nominal harus lebih besar dari Rp 0.' });
+       return;
+    }
+
+    // Pastikan transaksi ini milik user tersebut
+    const checkTx = await pool.query('SELECT id FROM transaksi WHERE id = $1 AND user_id = $2', [id, userId]);
+    if (checkTx.rows.length === 0) {
+      res.status(403).json({ error: 'Anda tidak memiliki hak akses untuk mengedit transaksi ini.' });
+      return;
+    }
+
+    const kategori_id = await getOrCreateKategori(userId!, kategori_nama, tipe);
+
+    const updateResult = await pool.query(
+      `UPDATE transaksi 
+       SET kategori_id = $1, tanggal = $2, nominal = $3, keterangan = $4, tipe = $5
+       WHERE id = $6 AND user_id = $7
+       RETURNING id, tanggal, nominal, tipe, keterangan`,
+      [kategori_id, tanggal, parsedNominal.toString(), keterangan, tipe, id, userId]
+    );
+
+    res.status(200).json({
+      message: 'Transaksi berhasil diperbarui',
+      data: updateResult.rows[0]
+    });
+  } catch (error) {
+    next(error);
+  }
+};
