@@ -198,7 +198,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
       headStyles: { fillColor: [37, 99, 235] }, // blue-600
     });
 
-    doc.save(`Laporan_bukuku_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`Laporan_aturlah_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   // Optimasi Kalkulasi Chart dengan useMemo agar tidak re-render berat
@@ -227,7 +227,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
               <Wallet size={16} className="text-white" />
             </div>
-            <span className="font-extrabold text-xl tracking-tight text-slate-900">bukuku.</span>
+            <span className="font-extrabold text-xl tracking-tight text-slate-900">aturlah.id</span>
          </div>
          <nav className="flex-1 p-4 space-y-2">
             <button 

@@ -10,6 +10,7 @@ const LandingPage = lazy(() => import('./LandingPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 
 // Loading component for Suspense
 const PageLoader = () => (
@@ -39,6 +40,8 @@ function AppRoutes({ currentUser, token, handleLoginSuccess, handleLogout }: any
         <Routes location={location}>
           <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
           
+          <Route path="/verify-email" element={<PageTransition><VerifyEmailPage /></PageTransition>} />
+
           <Route 
             path="/login" 
             element={

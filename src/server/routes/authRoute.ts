@@ -1,8 +1,17 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { register, login, forgotPassword, resetPassword } from '../controllers/authController.js';
+import { register, login, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail, checkVerificationStatus } from '../controllers/authController.js';
 
 const router = Router();
+
+// Endpoint Verifikasi Email (Token dari URL)
+router.get('/verify-email', verifyEmail);
+
+// Endpoint Kirim Ulang Verifikasi
+router.post('/resend-verification', resendVerificationEmail);
+
+// Endpoint Cek Status Verifikasi (Polling)
+router.get('/check-verification', checkVerificationStatus);
 
 // Endpoint Lupa Password (Minta Kode)
 router.post(

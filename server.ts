@@ -10,6 +10,7 @@ import { errorHandler } from './src/server/middleware/errorMiddleware.js';
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', true);
   // PORT adapts to environment for Cloud Run compatibility
   const PORT = Number(process.env.PORT) || 3000;
 
@@ -51,7 +52,7 @@ async function startServer() {
   // Menginkubasi Express Server
   app.listen(PORT, '0.0.0.0', () => {
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`bukuku (Dev) Backend Server running on http://localhost:${PORT}`);
+      console.log(`aturlah.id (Dev) Backend Server running on http://localhost:${PORT}`);
     }
   });
 }

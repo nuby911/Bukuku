@@ -12,44 +12,66 @@ export const getAllUsers = async (req: AuthRequest, res: Response, next: NextFun
     const safeLimit = limit > 200 ? 200 : Math.max(1, limit);
     const offset = (Math.max(1, page) - 1) * safeLimit;
 
-    let countQuery = 'SELECT COUNT(id) FROM users';
+    let whereClause = ' WHERE is_verified = TRUE ';
     let countValues: any[] = [];
-    let usersQuery = `
-      SELECT id, nama_lengkap, email, role, created_at, last_login_at 
-      FROM users 
-    `;
     let usersValues: any[] = [];
-    let whereClause = '';
 
     if (search) {
-      whereClause = ' WHERE nama_lengkap ILIKE $1 OR email ILIKE $1 ';
-      countQuery += whereClause;
+      whereClause += ' AND (nama_lengkap ILIKE $1 OR email ILIKE $1) ';
       countValues.push(`%${search}%`);
       
-      usersQuery += whereClause;
-      usersQuery += ' ORDER BY created_at DESC LIMIT $2 OFFSET $3 ';
+      const countQuery = 'SELECT COUNT(id) FROM users ' + whereClause;
+      const countResult = await pool.query(countQuery, countValues);
+      const totalItems = parseInt(countResult.rows[0].count);
+
+      const usersQuery = `
+        SELECT id, nama_lengkap, email, role, created_at, last_login_at 
+        FROM users 
+        ${whereClause}
+        ORDER BY created_at DESC LIMIT $2 OFFSET $3
+      `;
       usersValues = [`%${search}%`, safeLimit, offset];
+      const usersResult = await pool.query(usersQuery, usersValues);
+
+      res.status(200).json({
+        message: 'Daftar pengguna berhasil dimuat',
+        data: usersResult.rows,
+        meta: {
+          totalItems,
+          currentPage: page,
+          totalPages: Math.ceil(totalItems / safeLimit),
+          itemsPerPage: safeLimit,
+          hasNextPage: page < Math.ceil(totalItems / safeLimit)
+        }
+      });
+      return;
     } else {
-      usersQuery += ' ORDER BY created_at DESC LIMIT $1 OFFSET $2 ';
+      const countQuery = 'SELECT COUNT(id) FROM users ' + whereClause;
+      const countResult = await pool.query(countQuery);
+      const totalItems = parseInt(countResult.rows[0].count);
+
+      const usersQuery = `
+        SELECT id, nama_lengkap, email, role, created_at, last_login_at 
+        FROM users 
+        ${whereClause}
+        ORDER BY created_at DESC LIMIT $1 OFFSET $2
+      `;
       usersValues = [safeLimit, offset];
+      const usersResult = await pool.query(usersQuery, usersValues);
+
+      res.status(200).json({
+        message: 'Daftar pengguna berhasil dimuat',
+        data: usersResult.rows,
+        meta: {
+          totalItems,
+          currentPage: page,
+          totalPages: Math.ceil(totalItems / safeLimit),
+          itemsPerPage: safeLimit,
+          hasNextPage: page < Math.ceil(totalItems / safeLimit)
+        }
+      });
+      return;
     }
-
-    const countResult = await pool.query(countQuery, countValues);
-    const totalItems = parseInt(countResult.rows[0].count);
-
-    const usersResult = await pool.query(usersQuery, usersValues);
-
-    res.status(200).json({
-      message: 'Daftar pengguna berhasil dimuat',
-      data: usersResult.rows,
-      meta: {
-        totalItems,
-        currentPage: page,
-        totalPages: Math.ceil(totalItems / safeLimit),
-        itemsPerPage: safeLimit,
-        hasNextPage: page < Math.ceil(totalItems / safeLimit)
-      }
-    });
   } catch (error) {
     next(error);
   }

@@ -14,7 +14,7 @@ const translations = {
     contact: "Kontak",
     login: "Login",
     register_free: "Mulai Gratis",
-    total_balance: "Saldo Mahasiswa",
+    total_balance: "Saldo Aturlah",
     dashboard: "Dashboard",
     transactions: "Catatan",
     reports: "Laporan",
@@ -36,9 +36,11 @@ const translations = {
     step_2_desc: "Mulai catat Uang pengeluaran Kamu",
     step_3_title: "Bebas Boncos",
     step_3_desc: "Pantau sisa budget harianmu",
-    footer_copy: "© 2026 bukuku. Sahabat finansial mahasiswa.",
+    footer_copy: "© 2026 aturlah.id. Sahabat finansial mahasiswa.",
     footer_privacy: "Kebijakan Privasi",
     footer_terms: "Syarat & Ketentuan",
+    footer_faq: "FAQ",
+    footer_support: "Support",
     hero_badge: "Teman Setia 10.000+ Mahasiswa",
     hero_title_1: "Atur Duit Jajan",
     hero_title_2: "Tanpa Drama",
@@ -47,7 +49,7 @@ const translations = {
     hero_start: "Mulai Atur Duit",
     hero_demo: "Cara Daftar",
     cta_title: "Siap jadi mahasiswa melek finansial?",
-    cta_desc: "Gabung dengan ribuan mahasiswa yang sudah pakai bukuku untuk kelola keuangan mu lebih cerdas",
+    cta_desc: "Gabung dengan ribuan mahasiswa yang sudah pakai aturlah.id untuk kelola keuangan mu lebih cerdas",
     cta_btn: "Daftar Sekarang, Gratis!"
   },
   en: {
@@ -56,7 +58,7 @@ const translations = {
     contact: "Contact",
     login: "Login",
     register_free: "Start for Free",
-    total_balance: "Student Balance",
+    total_balance: "Aturlah Balance",
     dashboard: "Dashboard",
     transactions: "Records",
     reports: "Reports",
@@ -73,14 +75,16 @@ const translations = {
     feat_4_title: "Safe Privacy",
     feat_4_desc: "Your financial data is secure, only you can see it.",
     step_1_title: "Create Account",
-    step_1_desc: "Instant registration via campus email",
+    step_1_desc: "Instant registration via account email",
     step_2_title: "Input Expenses",
     step_2_desc: "Start recording rent or tuition",
     step_3_title: "No More Broke",
     step_3_desc: "Monitor your daily budget",
-    footer_copy: "© 2026 bukuku. Your campus financial buddy.",
+    footer_copy: "© 2026 aturlah.id. Your campus financial buddy.",
     footer_privacy: "Privacy Policy",
     footer_terms: "Terms & Conditions",
+    footer_faq: "FAQ",
+    footer_support: "Support",
     hero_badge: "Trusted by 10,000+ Students",
     hero_title_1: "Manage Allowance",
     hero_title_2: "No Drama",
@@ -89,7 +93,7 @@ const translations = {
     hero_start: "Get Started",
     hero_demo: "How to Join",
     cta_title: "Ready to be a financially savvy student?",
-    cta_desc: "Join thousands of students who have switched to bukuku for smarter campus budget management.",
+    cta_desc: "Join thousands of students who have switched to aturlah.id for smarter campus budget management.",
     cta_btn: "Register for Free Now"
   }
 };const ChaosText = React.memo(({ text, delayOffset = 0 }: { text: string, delayOffset?: number }) => {
@@ -153,7 +157,7 @@ const Navbar = React.memo(({ lang, setLang, t }: any) => {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
               <div className="w-3 h-3 border-2 border-white rounded-sm"></div>
             </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">bukuku</span>
+            <span className="text-xl font-bold tracking-tight text-slate-900">aturlah.id</span>
           </div>
           
           {/* Desktop Links - Hidden always per user request */}
@@ -176,7 +180,7 @@ const Navbar = React.memo(({ lang, setLang, t }: any) => {
               {t.login}
             </button>
             <button 
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/login?mode=register')}
               className="text-sm font-bold bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all hover:-translate-y-0.5"
             >
               {t.register_free}
@@ -229,7 +233,7 @@ const Navbar = React.memo(({ lang, setLang, t }: any) => {
                 <button 
                   onClick={() => {
                     setIsOpen(false);
-                    navigate('/login');
+                    navigate('/login?mode=register');
                   }} 
                   className="text-center font-bold bg-blue-600 text-white px-5 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors"
                 >
@@ -406,27 +410,92 @@ const HowItWorksSection = React.memo(({ t }: any) => {
   );
 });
 
-const Footer = React.memo(({ t }: any) => (
-  <footer id="kontak" className="px-4 sm:px-6 lg:px-10 py-8 bg-white border-t border-slate-200">
-    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{t.footer_copy}</p>
-      <div className="flex flex-wrap items-center justify-center space-x-6 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-        <a href="#" className="hover:text-blue-600 transition-colors">{t.footer_privacy}</a>
-        <a href="#" className="hover:text-blue-600 transition-colors">{t.footer_terms}</a>
-        <div className="flex items-center space-x-3 ml-2 lg:ml-6">
-          <div className="w-6 h-6 bg-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600 rounded-md flex items-center justify-center cursor-pointer transition-colors"><Facebook className="w-3.5 h-3.5" /></div>
-          <div className="w-6 h-6 bg-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600 rounded-md flex items-center justify-center cursor-pointer transition-colors"><Twitter className="w-3.5 h-3.5" /></div>
-          <a href="https://www.instagram.com/rbyiat_?igsh=MXJ1N3R4Zm55Y3Vtbg==" target="_blank" rel="noopener noreferrer" className="w-6 h-6 bg-slate-100 text-slate-400 hover:bg-pink-50 hover:text-pink-600 rounded-md flex items-center justify-center cursor-pointer transition-colors">
-            <Instagram className="w-3.5 h-3.5" />
-          </a>
-          <a href="https://wa.me/6285609199965" target="_blank" rel="noopener noreferrer" className="w-6 h-6 bg-green-50 text-green-600 hover:bg-green-100 rounded-md flex items-center justify-center cursor-pointer transition-colors">
-            <MessageCircle className="w-3.5 h-3.5" />
-          </a>
+const Footer = React.memo(({ t }: any) => {
+  const navigate = useNavigate();
+  return (
+    <footer id="kontak" className="px-4 sm:px-6 lg:px-10 py-16 bg-slate-50 border-t border-slate-200">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          {/* Brand Column */}
+          <div className="space-y-6">
+             <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                  <div className="w-3.5 h-3.5 border-2 border-white rounded-sm"></div>
+                </div>
+                <span className="text-xl font-bold tracking-tight text-slate-900 italic">aturlah<span className="text-blue-600">.id</span></span>
+              </div>
+              <p className="text-sm font-medium text-slate-500 leading-relaxed max-w-xs">
+                Solusi pencatatan keuangan cerdas bagi mahasiswa Indonesia. Kelola jajan, hemat biaya, capai impian.
+              </p>
+          </div>
+          
+          {/* Product Links */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-black uppercase underline decoration-blue-500 decoration-2 underline-offset-8 tracking-widest text-slate-900">Platform</h4>
+            <div className="flex flex-col space-y-3">
+              <button onClick={() => navigate('/login')} className="text-left text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-tight">{t.login}</button>
+              <button onClick={() => navigate('/login')} className="text-left text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-tight">{t.register_free}</button>
+              <button onClick={() => navigate('/dashboard')} className="text-left text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-tight">{t.dashboard}</button>
+            </div>
+          </div>
+
+          {/* Legal & Help */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-black uppercase underline decoration-blue-500 decoration-2 underline-offset-8 tracking-widest text-slate-900">Dukungan</h4>
+            <div className="flex flex-col space-y-3">
+              <a href="#" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-tight">{t.footer_privacy}</a>
+              <a href="#" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-tight">{t.footer_terms}</a>
+              <a href="#" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-tight">{t.footer_faq}</a>
+              <div className="pt-2">
+                <a href="mailto:bukukukita@gmail.com" className="group flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-all">
+                  <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Globe size={14} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email Support</span>
+                    <span className="text-xs font-bold text-slate-700">bukukukita@gmail.com</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Social Media */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-black uppercase underline decoration-blue-500 decoration-2 underline-offset-8 tracking-widest text-slate-900">Media Sosial</h4>
+            <p className="text-xs font-bold text-slate-400 leading-relaxed uppercase tracking-tighter">Terhubung dengan komunitas kami untuk tips finansial harian.</p>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white shadow-sm text-slate-400 hover:text-blue-600 hover:shadow-md hover:-translate-y-1 rounded-xl flex items-center justify-center cursor-pointer transition-all border border-slate-200"><Facebook size={18} /></div>
+              <div className="w-10 h-10 bg-white shadow-sm text-slate-400 hover:text-blue-400 hover:shadow-md hover:-translate-y-1 rounded-xl flex items-center justify-center cursor-pointer transition-all border border-slate-200"><Twitter size={18} /></div>
+              <a href="https://www.instagram.com/rbyiat_?igsh=MXJ1N3R4Zm55Y3Vtbg==" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white shadow-sm text-slate-400 hover:text-pink-600 hover:shadow-md hover:-translate-y-1 rounded-xl flex items-center justify-center cursor-pointer transition-all border border-slate-200">
+                <Instagram size={18} />
+              </a>
+              <a href="https://wa.me/6285609199965" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white shadow-sm text-green-600 hover:shadow-md hover:-translate-y-1 rounded-xl flex items-center justify-center cursor-pointer transition-all border border-slate-200">
+                <MessageCircle size={18} />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-10 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col items-center md:items-start gap-1">
+             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">{t.footer_copy}</p>
+             <p className="text-[9px] font-bold text-slate-300 uppercase">Designed with ❤️ for Indonesian Students</p>
+          </div>
+          <div className="flex items-center space-x-4 bg-white px-4 py-2 rounded-full border border-slate-100 shadow-sm">
+             <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active</span>
+             </div>
+             <div className="w-px h-3 bg-slate-200"></div>
+             <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">V 2.0.4 - STABLE</span>
+          </div>
         </div>
       </div>
-    </div>
-  </footer>
-));
+    </footer>
+  );
+});
 ;
 
 export default function LandingPage() {
@@ -460,7 +529,7 @@ export default function LandingPage() {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
-                  <button onClick={() => navigate('/login')} className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all hover:shadow-lg hover:-translate-y-0.5">
+                  <button onClick={() => navigate('/login?mode=register')} className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all hover:shadow-lg hover:-translate-y-0.5">
                     {t.hero_start}
                   </button>
                   <a href="#cara-daftar" className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-4 font-bold text-slate-700 hover:text-blue-600 transition-colors group">
@@ -490,7 +559,7 @@ export default function LandingPage() {
           <div className="max-w-3xl mx-auto px-4 text-center relative z-10 flex flex-col items-center">
             <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight leading-tight">{t.cta_title}</h2>
             <p className="text-blue-100 mb-10 text-lg md:text-xl font-medium max-w-2xl">{t.cta_desc}</p>
-            <button onClick={() => navigate('/login')} className="bg-white text-blue-600 px-8 py-4 rounded-xl font-extrabold text-lg flex items-center gap-3 hover:bg-slate-50 transition-all shadow-2xl shadow-blue-900/50 hover:shadow-blue-900/70 hover:-translate-y-1">
+            <button onClick={() => navigate('/login?mode=register')} className="bg-white text-blue-600 px-8 py-4 rounded-xl font-extrabold text-lg flex items-center gap-3 hover:bg-slate-50 transition-all shadow-2xl shadow-blue-900/50 hover:shadow-blue-900/70 hover:-translate-y-1">
               {t.cta_btn}
               <ChevronRight className="w-5 h-5" />
             </button>

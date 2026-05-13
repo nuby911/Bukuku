@@ -1,6 +1,6 @@
 export const dashboardTranslations = {
   id: {
-     summary: "Ringkasan Buku Saku",
+     summary: "Ringkasan Aturlah",
      subtitle: "Manajer Keuangan Mahasiswa & Pribadi",
      owner: "Mahasiswa",
      total_balance: "Sisa Saldo",
@@ -32,7 +32,7 @@ export const dashboardTranslations = {
      summary_menu: "Home",
      history_menu: "Histori",
      report_menu: "Statistik",
-     error_fetch: "Gagal memuat data bukuku",
+     error_fetch: "Gagal memuat data aturlah.id",
      error_submit: "Gagal menyimpan catatan",
      download_pdf: "Unduh Laporan",
      report_title: "Laporan Keuangan",
