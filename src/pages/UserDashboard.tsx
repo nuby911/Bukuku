@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Wallet, LayoutDashboard, ArrowRightLeft, PieChart, LogOut, Plus, Loader2, DollarSign, X, Globe, Download
+  Wallet, LayoutDashboard, ArrowRightLeft, PieChart, LogOut, Plus, Loader2, DollarSign, X, Globe, Download, Trash2
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +22,10 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
   const [totalMasuk, setTotalMasuk] = useState(0);
   const [totalKeluar, setTotalKeluar] = useState(0);
   const [editItem, setEditItem] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   // Filter & Search State
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,6 +90,15 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
     fetchTransaksi();
   }, [fetchTransaksi]);
 
+  useEffect(() => {
+    const firstDay = new Date(selectedYear, selectedMonth - 1, 1).toISOString().split('T')[0];
+    const lastDay = new Date(selectedYear, selectedMonth, 0).toISOString().split('T')[0];
+    
+    setStartDate(firstDay);
+    setEndDate(lastDay);
+    setFilterDays(null);
+  }, [selectedMonth, selectedYear]);
+
   const handleSubmitTransaksi = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitLoading(true);
@@ -123,7 +136,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
     }
   };
 
-  const handleEditClick = (trx: any) => {
+  const handleEditClick = useCallback((trx: any) => {
     setEditItem(trx.id);
     setFormData({
       tipe: trx.tipe,
@@ -133,9 +146,37 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
       keterangan: trx.keterangan || ''
     });
     setShowModal(true);
+  }, [t.edit_transaction_title]);
+
+  const handleDeleteClick = useCallback((id: string) => {
+    setDeleteConfirmId(id);
+  }, []);
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    setIsDeleting(true);
+    
+    try {
+      const response = await fetch(`/api/transaksi/${deleteConfirmId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Gagal menghapus transaksi');
+      
+      setDeleteConfirmId(null);
+      fetchTransaksi(); // Refresh list & totals
+    } catch (err: any) {
+      setSubmitError(err.message);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
     setEditItem(null);
     setFormData({
       tipe: 'keluar',
@@ -145,12 +186,21 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
       keterangan: ''
     });
     setShowModal(true);
-  };
+  }, []);
 
   // Format Rupiah memoized
   const formatRupiah = useCallback((angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
   }, []);
+
+  const filteredTransaksiList = useMemo(() => {
+    if (!searchTerm) return transaksiList;
+    const lowerSearch = searchTerm.toLowerCase();
+    return transaksiList.filter((trx: any) => 
+      (trx.keterangan?.toLowerCase().includes(lowerSearch)) ||
+      (trx.nama_kategori?.toLowerCase().includes(lowerSearch))
+    );
+  }, [transaksiList, searchTerm]);
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -179,7 +229,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
     const tableColumn = [t.date, t.description, t.category, t.type, t.amount];
     const tableRows = [];
 
-    transaksiList.forEach((trx: any) => {
+    filteredTransaksiList.forEach((trx: any) => {
       const trxData = [
         new Date(trx.tanggal).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US'),
         trx.keterangan || '-',
@@ -204,7 +254,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
   // Optimasi Kalkulasi Chart dengan useMemo agar tidak re-render berat
   const chartData = useMemo(() => {
     const categories: Record<string, number> = {};
-    transaksiList.forEach((trx: any) => {
+    filteredTransaksiList.forEach((trx: any) => {
       if (trx.tipe === 'keluar') {
         const catName = trx.nama_kategori || t.no_category;
         categories[catName] = (categories[catName] || 0) + parseFloat(trx.nominal);
@@ -217,7 +267,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
         value: categories[key],
       }))
       .sort((a, b) => b.value - a.value);
-  }, [transaksiList, t.no_category]);
+  }, [filteredTransaksiList, t.no_category]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -301,6 +351,25 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2">
+                   <select 
+                      value={selectedMonth} 
+                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                      className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 focus:outline-none"
+                    >
+                      {[...Array(12)].map((_, i) => (
+                        <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('id-ID', { month: 'long' })}</option>
+                      ))}
+                    </select>
+                    <select 
+                      value={selectedYear} 
+                      onChange={(e) => setSelectedYear(Number(e.target.value))}
+                      className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 focus:outline-none"
+                    >
+                      {[...Array(5)].map((_, i) => {
+                        const year = new Date().getFullYear() - 2 + i;
+                        return <option key={year} value={year}>{year}</option>;
+                      })}
+                    </select>
                    <button 
                       onClick={() => { setFilterDays(1); setStartDate(''); setEndDate(''); setTempStartDate(''); setTempEndDate(''); }}
                       className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filterDays === 1 ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
@@ -427,12 +496,13 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
                   </div>
                   
                   <TransactionTable 
-                    list={transaksiList.slice(0, 10)} 
+                    list={filteredTransaksiList.slice(0, 10)} 
                     loading={loading}
                     t={t}
                     lang={lang}
                     formatRupiah={formatRupiah}
                     onEdit={handleEditClick}
+                    onDelete={handleDeleteClick}
                   />
                 </div>
               </motion.div>
@@ -460,17 +530,13 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
                     </button>
                   </div>
                   <TransactionTable 
-                    list={transaksiList.filter((trx: any) => {
-                      const matchesSearch = 
-                        (trx.keterangan?.toLowerCase().includes(searchTerm.toLowerCase())) || 
-                        (trx.nama_kategori?.toLowerCase().includes(searchTerm.toLowerCase()));
-                      return matchesSearch;
-                    })}
+                    list={filteredTransaksiList}
                     loading={loading}
                     t={t}
                     lang={lang}
                     formatRupiah={formatRupiah}
                     onEdit={handleEditClick}
+                    onDelete={handleDeleteClick}
                   />
                 </div>
               </motion.div>
@@ -683,6 +749,58 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl p-8 text-center"
+            >
+              <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Hapus Transaksi?</h3>
+              <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+                Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus catatan ini selamanya?
+              </p>
+
+              {submitError && deleteConfirmId && (
+                <div className="mb-6 p-3 bg-rose-50 text-rose-600 text-xs font-bold rounded-xl border border-rose-100">
+                  {submitError}
+                </div>
+              )}
+              
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="w-full py-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-lg shadow-rose-200 transition-all flex items-center justify-center gap-2 active:scale-95"
+                >
+                  {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                  {isDeleting ? 'Menghapus...' : 'Ya, Hapus Sekarang'}
+                </button>
+                <button 
+                  onClick={() => { setDeleteConfirmId(null); setSubmitError(''); }}
+                  disabled={isDeleting}
+                  className="w-full py-4 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-all active:scale-95"
+                >
+                  Batalkan
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-lg border border-white/20 shadow-2xl rounded-2xl px-2 py-2 flex items-center gap-1 z-40 ring-1 ring-slate-200">
           <button 
@@ -721,7 +839,7 @@ export default function UserDashboard({ user, token, onLogout }: { user: any, to
 }
 
 // Sub-komponen yang di-memoized untuk performa maksimal
-const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah, onEdit }: any) => (
+const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah, onEdit, onDelete }: any) => (
   <div className="w-full">
     {/* Desktop View Table */}
     <div className="hidden md:block overflow-x-auto">
@@ -777,12 +895,22 @@ const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah, onE
                   )}
                 </td>
                 <td className="px-6 py-4 text-center">
-                  <button 
-                    onClick={() => onEdit(trx)}
-                    className="text-blue-500 hover:text-blue-700 font-bold text-xs"
-                  >
-                    {t.edit}
-                  </button>
+                  <div className="flex items-center justify-center gap-3">
+                    <button 
+                      type="button"
+                      onClick={() => onEdit(trx)}
+                      className="text-blue-500 hover:text-blue-700 font-bold text-xs flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-md transition-all cursor-pointer relative z-10"
+                    >
+                      {t.edit}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => onDelete(trx.id)}
+                      className="text-rose-500 hover:text-rose-700 font-bold text-xs flex items-center gap-1 bg-rose-50 px-2 py-1 rounded-md transition-all cursor-pointer relative z-10"
+                    >
+                      <Trash2 size={12} /> Hapus
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))
@@ -807,8 +935,8 @@ const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah, onE
         </div>
       ) : (
         list.map((trx: any) => (
-          <div key={trx.id} className="p-4 flex items-center justify-between hover:bg-slate-50 active:bg-slate-100 transition-colors" onClick={() => onEdit(trx)}>
-            <div className="flex items-center gap-3">
+          <div key={trx.id} className="p-4 flex items-center justify-between hover:bg-slate-50 active:bg-slate-100 transition-colors">
+            <div className="flex items-center gap-3" onClick={() => onEdit(trx)}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${trx.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                  {trx.tipe === 'masuk' ? <DollarSign size={18} /> : <ArrowRightLeft size={18} />}
               </div>
@@ -823,15 +951,25 @@ const TransactionTable = React.memo(({ list, loading, t, lang, formatRupiah, onE
                  </div>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right flex flex-col items-end gap-2 shrink-0">
               <p className={`text-sm font-black whitespace-nowrap ${trx.tipe === 'masuk' ? 'text-emerald-600' : 'text-slate-900'}`}>
                 {trx.tipe === 'masuk' ? '+' : '-'} {formatRupiah(parseFloat(trx.nominal))}
               </p>
-              <div className="flex flex-col items-end gap-1">
-                <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${trx.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                  {trx.tipe === 'masuk' ? t.income : t.expense}
-                </span>
-                <span className="text-[9px] text-blue-500 font-bold">{t.edit}</span>
+              <div className="flex items-center gap-2 relative z-10">
+                <button 
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onEdit(trx); }}
+                  className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1.5 rounded-md font-bold uppercase flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                >
+                  {t.edit}
+                </button>
+                <button 
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onDelete(trx.id); }}
+                  className="text-[10px] bg-rose-50 text-rose-600 px-2 py-1.5 rounded-md font-bold uppercase flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                >
+                  <Trash2 size={10} /> Hapus
+                </button>
               </div>
             </div>
           </div>

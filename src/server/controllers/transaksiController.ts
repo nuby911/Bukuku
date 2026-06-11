@@ -237,3 +237,25 @@ export const updateTransaksi = async (req: AuthRequest, res: Response, next: Nex
     next(error);
   }
 };
+
+export const deleteTransaksi = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    // Pastikan transaksi ini milik user tersebut
+    const checkTx = await pool.query('SELECT id FROM transaksi WHERE id = $1 AND user_id = $2', [id, userId]);
+    if (checkTx.rows.length === 0) {
+      res.status(403).json({ error: 'Anda tidak memiliki hak akses untuk menghapus transaksi ini.' });
+      return;
+    }
+
+    await pool.query('DELETE FROM transaksi WHERE id = $1 AND user_id = $2', [id, userId]);
+
+    res.status(200).json({
+      message: 'Transaksi berhasil dihapus'
+    });
+  } catch (error) {
+    next(error);
+  }
+};

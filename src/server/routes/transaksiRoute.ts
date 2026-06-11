@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
 import { verifyToken } from '../middleware/authMiddleware.js';
-import { createTransaksi, getTransaksi, getTransaksiSummary, updateTransaksi } from '../controllers/transaksiController.js';
+import { createTransaksi, getTransaksi, getTransaksiSummary, updateTransaksi, deleteTransaksi } from '../controllers/transaksiController.js';
 
 const router = Router();
 // ...
@@ -75,6 +75,9 @@ router.put(
   ],
   updateTransaksi
 );
+
+// Endpoint [DELETE] - Hapus Transaksi
+router.delete('/:id', deleteTransaksi);
 
 // Endpoint [GET] - Ambil Laporan Semua Transaksi
 router.get(
