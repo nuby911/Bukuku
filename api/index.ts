@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
-import authRoutes from './src/server/routes/authRoute';
-import transaksiRoutes from './src/server/routes/transaksiRoute';
-import adminRoutes from './src/server/routes/adminRoute';
-import { errorHandler } from './src/server/middleware/errorMiddleware';
+import authRoutes from '../src/server/routes/authRoute';
+import transaksiRoutes from '../src/server/routes/transaksiRoute';
+import adminRoutes from '../src/server/routes/adminRoute';
+import { errorHandler } from '../src/server/middleware/errorMiddleware';
 
 const app = express();
 

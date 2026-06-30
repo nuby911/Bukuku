@@ -94,8 +94,9 @@ export default function LoginPage({ onAuthSuccess }: { onAuthSuccess: (user: any
       if (contentType && contentType.includes("application/json")) {
         data = await response.json();
       } else {
-        // Fallback for non-json responses (like 404 or 500 html pages)
-        throw new Error('email belum di verifikasi');
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        throw new Error('Terjadi kesalahan pada server (Koneksi database atau Server Error). Silakan periksa kembali konfigurasi database Anda.');
       }
 
       if (!response.ok) {
@@ -156,7 +157,7 @@ export default function LoginPage({ onAuthSuccess }: { onAuthSuccess: (user: any
           setError(resData.error);
         }
       } else {
-        setError('email belum di verifikasi');
+        setError('Gagal mengirim ulang email. Layanan email belum diatur atau terjadi kesalahan pada server.');
       }
     } catch (e) {
       setError(t.conn_error);

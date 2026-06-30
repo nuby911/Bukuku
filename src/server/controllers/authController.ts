@@ -41,6 +41,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 jam
+    const bypassVerification = process.env.BYPASS_EMAIL_VERIFICATION === 'true' || !process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD;
     const saltRounds = 10;
     const password_hash = await bcrypt.hash(password, saltRounds);
 
@@ -56,31 +57,33 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 
       // Jika belum terverifikasi, kita "timpa" data lamanya (registrasi ulang)
       const updateResult = await pool.query(
-        'UPDATE users SET nama_lengkap = $1, password_hash = $2, verification_token = $3, verification_expires = $4, last_verification_sent_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING id, nama_lengkap, email',
-        [nama_lengkap, password_hash, verificationToken, verificationExpires, existingUser.id]
+        'UPDATE users SET nama_lengkap = $1, password_hash = $2, is_verified = $3, verification_token = $4, verification_expires = $5, last_verification_sent_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING id, nama_lengkap, email',
+        [nama_lengkap, password_hash, bypassVerification, verificationToken, verificationExpires, existingUser.id]
       );
       newUser = updateResult.rows[0];
     } else {
       // Jika benar-benar baru
       const insertResult = await pool.query(
-        'INSERT INTO users (nama_lengkap, email, password_hash, verification_token, verification_expires, last_verification_sent_at) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP) RETURNING id, nama_lengkap, email',
-        [nama_lengkap, email, password_hash, verificationToken, verificationExpires]
+        'INSERT INTO users (nama_lengkap, email, password_hash, is_verified, verification_token, verification_expires, last_verification_sent_at) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP) RETURNING id, nama_lengkap, email',
+        [nama_lengkap, email, password_hash, bypassVerification, verificationToken, verificationExpires]
       );
       newUser = insertResult.rows[0];
     }
 
-    // Kirim Email Verifikasi
-    const baseUrl = getBaseUrl(req);
-    
-    try {
-      await sendVerificationEmail(email, verificationToken, baseUrl);
-    } catch (mailError) {
-      console.error('Gagal mengirim email verifikasi:', mailError);
-      // Tetap lanjutkan registrasi tapi berikan warning atau handle sesuai kebijakan
+    // Kirim Email Verifikasi jika tidak di-bypass
+    if (!bypassVerification) {
+      const baseUrl = getBaseUrl(req);
+      try {
+        await sendVerificationEmail(email, verificationToken, baseUrl);
+      } catch (mailError) {
+        console.error('Gagal mengirim email verifikasi:', mailError);
+      }
     }
 
     res.status(201).json({
-      message: 'Registrasi berhasil. Silakan cek email Anda untuk memverifikasi akun.',
+      message: bypassVerification 
+        ? 'Registrasi berhasil! Akun Anda telah aktif secara otomatis.' 
+        : 'Registrasi berhasil. Silakan cek email Anda untuk memverifikasi akun.',
       user: newUser
     });
   } catch (error: any) {
@@ -109,13 +112,19 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     }
 
     const user = userResult.rows[0];
+    const bypassVerification = process.env.BYPASS_EMAIL_VERIFICATION === 'true' || !process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD;
 
     if (!user.is_verified) {
-      res.status(403).json({ 
-        error: 'Akun Anda belum diverifikasi.', 
-        code: 'EMAIL_NOT_VERIFIED' 
-      });
-      return;
+      if (bypassVerification) {
+        // Otomatis verifikasi user di DB jika bypass aktif agar selanjutnya is_verified = true
+        await pool.query('UPDATE users SET is_verified = TRUE WHERE id = $1', [user.id]);
+      } else {
+        res.status(403).json({ 
+          error: 'Akun Anda belum diverifikasi.', 
+          code: 'EMAIL_NOT_VERIFIED' 
+        });
+        return;
+      }
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
