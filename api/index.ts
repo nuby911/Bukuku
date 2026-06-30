@@ -7,11 +7,11 @@ import compression from 'compression';
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
-import authRoutes from '../src/server/routes/authRoute';
-import transaksiRoutes from '../src/server/routes/transaksiRoute';
-import adminRoutes from '../src/server/routes/adminRoute';
-import { errorHandler } from '../src/server/middleware/errorMiddleware';
-import { pool } from '../src/server/config/db';
+import authRoutes from '../src/server/routes/authRoute.js';
+import transaksiRoutes from '../src/server/routes/transaksiRoute.js';
+import adminRoutes from '../src/server/routes/adminRoute.js';
+import { errorHandler } from '../src/server/middleware/errorMiddleware.js';
+import { pool } from '../src/server/config/db.js';
 
 const app = express();
 

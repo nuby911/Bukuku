@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { verifyToken, isAdmin } from '../middleware/authMiddleware';
-import { getAllUsers, deleteUser } from '../controllers/adminController';
+import { verifyToken, isAdmin } from '../middleware/authMiddleware.js';
+import { getAllUsers, deleteUser } from '../controllers/adminController.js';
 import { query } from 'express-validator';
 
 const router = Router();
