@@ -6,8 +6,8 @@
       "destination": "/api/index.ts"
     },
     {
-      "source": "/(.*)",
-      "destination": "/dist/index.html"
+      "source": "/((?!api|assets|favicon|logo).*)",
+      "destination": "/index.html"
     }
   ]
 }
