@@ -99,6 +99,59 @@ app.get('/api/migrate', async (req, res) => {
   }
 });
 
+// API Route untuk memverifikasi user yang sudah ada secara manual & aman tanpa menghapus data
+app.get('/api/verify-user', async (req, res) => {
+  const { email, secret } = req.query;
+  const systemSecret = process.env.JWT_SECRET;
+  
+  if (!systemSecret) {
+    return res.status(500).json({
+      status: 'error',
+      pesan: 'JWT_SECRET belum diatur di environment variable server.'
+    });
+  }
+  
+  if (!secret || secret !== systemSecret) {
+    return res.status(401).json({
+      status: 'error',
+      pesan: 'Akses ditolak. Parameter "secret" tidak cocok dengan JWT_SECRET.'
+    });
+  }
+
+  if (!email) {
+    return res.status(400).json({
+      status: 'error',
+      pesan: 'Parameter "email" wajib diisi.'
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE users SET is_verified = true WHERE email = $1 RETURNING id, email, role, is_verified',
+      [email]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        pesan: `User dengan email "${email}" tidak ditemukan di database.`
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      pesan: `Akun ${email} berhasil diverifikasi! Silakan coba login kembali.`,
+      user: result.rows[0]
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      status: 'error',
+      pesan: 'Gagal memverifikasi user.',
+      error: err.message || err
+    });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/transaksi', transaksiRoutes);
 app.use('/api/admin', adminRoutes);
