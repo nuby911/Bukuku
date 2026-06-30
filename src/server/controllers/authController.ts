@@ -41,7 +41,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 jam
-    const bypassVerification = process.env.BYPASS_EMAIL_VERIFICATION === 'true' || !process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD;
+    const bypassVerification = process.env.BYPASS_EMAIL_VERIFICATION !== 'false';
     const saltRounds = 10;
     const password_hash = await bcrypt.hash(password, saltRounds);
 
@@ -112,7 +112,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     }
 
     const user = userResult.rows[0];
-    const bypassVerification = process.env.BYPASS_EMAIL_VERIFICATION === 'true' || !process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD;
+    const bypassVerification = process.env.BYPASS_EMAIL_VERIFICATION !== 'false';
 
     if (!user.is_verified) {
       if (bypassVerification) {
