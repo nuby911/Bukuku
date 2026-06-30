@@ -3,10 +3,10 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import cors from 'cors';
 import compression from 'compression';
-import authRoutes from './src/server/routes/authRoute.js';
-import transaksiRoutes from './src/server/routes/transaksiRoute.js';
-import adminRoutes from './src/server/routes/adminRoute.js';
-import { errorHandler } from './src/server/middleware/errorMiddleware.js';
+import authRoutes from './src/server/routes/authRoute';
+import transaksiRoutes from './src/server/routes/transaksiRoute';
+import adminRoutes from './src/server/routes/adminRoute';
+import { errorHandler } from './src/server/middleware/errorMiddleware';
 
 async function startServer() {
   const app = express();

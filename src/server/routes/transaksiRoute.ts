@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
-import { verifyToken } from '../middleware/authMiddleware.js';
-import { createTransaksi, getTransaksi, getTransaksiSummary, updateTransaksi, deleteTransaksi } from '../controllers/transaksiController.js';
+import { verifyToken } from '../middleware/authMiddleware';
+import { createTransaksi, getTransaksi, getTransaksiSummary, updateTransaksi, deleteTransaksi } from '../controllers/transaksiController';
 
 const router = Router();
 // ...

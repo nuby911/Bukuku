@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/db.js';
+import { pool } from '../config/db';
 import { validationResult } from 'express-validator';
-import { sendResetCodeEmail, sendVerificationEmail } from '../services/mailService.js';
+import { sendResetCodeEmail, sendVerificationEmail } from '../services/mailService';
 import crypto from 'crypto';
 
 const getJwtSecret = () => {
