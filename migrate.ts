@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { pool } from './src/server/config/db.js';
 import fs from 'fs';
 import path from 'path';
@@ -20,8 +23,8 @@ async function migrate() {
     const adminCheck = await pool.query('SELECT * FROM users WHERE email = $1', ['admin@bukukas.com']);
     if (adminCheck.rows.length === 0) {
       await pool.query(`
-        INSERT INTO users (nama_lengkap, email, password_hash, role)
-        VALUES ('Super Admin', 'admin@bukukas.com', $1, 'super_admin')
+        INSERT INTO users (nama_lengkap, email, password_hash, role, is_verified)
+        VALUES ('Super Admin', 'admin@bukukas.com', $1, 'super_admin', true)
       `, [hash]);
       console.log('✅ Akun Super Admin berhasil dibuat!');
       console.log('Email: admin@bukukas.com');
