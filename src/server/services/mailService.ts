@@ -16,7 +16,9 @@ const getTransporter = () => {
   }
 
   transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // port 587 uses STARTTLS
     auth: { user, pass },
   });
 
@@ -50,7 +52,20 @@ export const sendResetCodeEmail = async (email: string, code: string) => {
     `,
   };
 
-  await mailTransporter.sendMail(mailOptions);
+  try {
+    await mailTransporter.sendMail(mailOptions);
+  } catch (err: any) {
+    console.error('⚠️ Gagal mengirim email SMTP:', err.message);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('\n==================================================');
+      console.log(`[DEV MODE - SMTP TIMEOUT / BLOCKED]`);
+      console.log(`Penerima: ${email}`);
+      console.log(`Kode OTP Reset Password Anda: ${code}`);
+      console.log('==================================================\n');
+      return;
+    }
+    throw err;
+  }
 };
 
 export const sendVerificationEmail = async (email: string, token: string, baseUrl: string) => {
@@ -83,5 +98,18 @@ export const sendVerificationEmail = async (email: string, token: string, baseUr
     `,
   };
 
-  await mailTransporter.sendMail(mailOptions);
+  try {
+    await mailTransporter.sendMail(mailOptions);
+  } catch (err: any) {
+    console.error('⚠️ Gagal mengirim email SMTP:', err.message);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('\n==================================================');
+      console.log(`[DEV MODE - SMTP TIMEOUT / BLOCKED]`);
+      console.log(`Penerima: ${email}`);
+      console.log(`Link Verifikasi Akun Anda: ${verificationUrl}`);
+      console.log('==================================================\n');
+      return;
+    }
+    throw err;
+  }
 };

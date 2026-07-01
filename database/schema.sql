@@ -20,6 +20,7 @@ CREATE TABLE users (
     is_verified BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(255),
     verification_expires TIMESTAMP WITH TIME ZONE,
+    last_verification_sent_at TIMESTAMP WITH TIME ZONE,
     reset_code VARCHAR(6),
     reset_expires TIMESTAMP,
     last_login_at TIMESTAMP WITH TIME ZONE,

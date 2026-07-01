@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import dns from 'node:dns';
+dns.setDefaultResultOrder('ipv4first');
+
 import { pool } from './src/server/config/db.js';
 import fs from 'fs';
 import path from 'path';
